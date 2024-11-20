@@ -5,7 +5,7 @@
 
 getwd()
 
-setwd("OneDrive - Harper Adams University/Data/agronomy/")
+setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
 
 ## 00 packages ####
 
@@ -75,26 +75,18 @@ dat$pc_reccomended_plants <- (dat$plants_m2 / dat$target_plants_m2) * 100
 
 dat$loss_pc <- (1 - (dat$plants_m2 / dat$seeds_m2)) * 100
 
+dat$harvest_index <- (dat$grain_m2 / (dat$biomass_dm_m2 + dat$grain_m2)) * 100
+
 
 dat <- dat %>%
   mutate(across(6:ncol(dat), as.numeric))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # View the result
 glimpse(dat)
+
+
+
+## 02 SUMMARY STATS ####
 
 # Calculates mean, sd, se and IC - block
 plants_m2_sum <- dat %>%
@@ -159,8 +151,30 @@ biomass_dm_m2_sum <- dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
+height_sum <- dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean=mean(crop_height_cm),
+    sd=sd(crop_height_cm)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
-## PLOTS ####
+harvest_index_sum <- dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean=mean(harvest_index),
+    sd=sd(harvest_index)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+
+
+## 03 PLOTS ####
 
 ### PLANTS M2 PLOT ####
 
@@ -305,4 +319,204 @@ ggsave(filename = "plots/fig_plant_est_plot.png", width = 14, height = 6)
 
 
 
+
+
+### biomass dm m2 ####
+
+title_exp <- expression(Biomass~dry~matter~(g~M^{2}))  # this is the legend title with correct notation
+
+y_title <- expression(Biomass~dry~matter~(g~M^{2}))
+
+c4 <- ggplot(data = biomass_dm_m2_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = title_exp, 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  facet_wrap(~ year, 
+             ncol = 4, 
+             scales = 'free_x') 
+
+c4
+
+
+
+### crop height ####
+
+title_exp <- expression(Crop~heightr~(cm))  # this is the legend title with correct notation
+
+y_title <- expression(Crop~heightr~(cm))
+
+c5 <- ggplot(data = height_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = title_exp, 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  facet_wrap(~ year, 
+             ncol = 4, 
+             scales = 'free_x') 
+
+c5
+
+
+
+
+### ears / pods m2 ####
+
+title_exp <- expression(Ears/pods~(M^{-1}))  # this is the legend title with correct notation
+
+y_title <- expression(Crop~heightr~(cm))
+
+c6 <- ggplot(data = ears_m2_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = title_exp, 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  facet_wrap(~ year, 
+             ncol = 4, 
+             scales = 'free_x') 
+
+c6
+
+
+### shoots m2 ####
+
+title_exp <- expression(Shoots~(M^{-1}))  # this is the legend title with correct notation
+
+y_title <- expression(Shoots~(M^{-1}))
+
+c7 <- ggplot(data = shoots_m2_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = title_exp, 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  facet_wrap(~ year, 
+             ncol = 4, 
+             scales = 'free_x') 
+
+c7
+
+
+
+### harvest index ####
+
+title_exp <- expression(havrest~index)  # this is the legend title with correct notation
+
+y_title <- expression(havrest~index)
+
+c8 <- ggplot(data = harvest_index_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = title_exp, 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) +
+  facet_wrap(~ year, 
+             ncol = 4, 
+             scales = 'free_x') 
+
+c8
+
+
+
+ggarrange(c4, c5, c6, c7, c8, ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+
+ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
 
