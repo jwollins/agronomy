@@ -3,6 +3,13 @@
 ## 2024-11-19
 
 
+getwd()
+
+setwd("~/OneDrive - Harper Adams University/Data/")
+
+
+
+
 ## 00 PACKAGES ####
 
 # Load required libraries
@@ -13,6 +20,9 @@ library(ggplot2)
 library(gganimate)
 library(transformr)
 library(scales)
+library(dplyr)
+
+
 
 
 ## 01 DATA ####
@@ -24,6 +34,242 @@ all_plots <- st_zm(all_plots)  # Removes Z/M dimensions
 
 # List all raster files in the directory
 raster_files <- list.files("ndvi/data/QGIS.rasters", pattern = "\\.tif$", full.names = TRUE)
+
+
+
+
+
+
+
+
+
+# Load raster
+dat2 <- brick("ndvi/data/2023_06_to_2024_10_psscene_analytic_sr_udm2/PSScene/20230904_102308_37_24b0_3B_AnalyticMS_SR_clip.tif")
+
+# Reproject dat2 to match the CRS of dat1
+dat2_reprojected <- projectRaster(dat2, crs = crs(dat1))
+
+# Resample dat2 to match the resolution of dat1
+dat2_resampled <- resample(dat2_reprojected, dat1)
+
+# Crop dat2 to match the extent of dat1
+dat2_cropped <- crop(dat2_resampled, extent(dat1))
+
+# If needed, select specific layers from dat2 to match the number of layers in dat1
+dat2_final <- dat2_cropped[[1:4]]  # Adjust the layer index if necessary
+
+# Now dat2_final should match the CRS, resolution, extent, and number of layers of dat1
+
+
+dat <- ndviFUN(dat2_final)
+
+plot(dat2_final)
+
+
+
+
+
+
+
+
+
+
+# Reproject and align to dat1
+dat2_reprojected <- projectRaster(dat2, to = dat1)
+
+# Optional: Resample (not strictly necessary if `projectRaster(to = dat1)` was used)
+dat2_resampled <- resample(dat2_reprojected, dat1)
+
+# Confirm extent and CRS
+print(crs(dat2_resampled))
+print(extent(dat2_resampled))
+print(extent(dat1))
+plot(dat2_resampled)
+crs(dat1)
+
+
+
+
+
+## test of forloop ###
+
+# Define the reference raster (dat1)
+ref_raster <- brick("ndvi/data/QGIS.rasters/2022_03_08_QGIS.tif")
+
+# Get the list of files
+new_files <- list.files("ndvi/data/2023_06_to_2024_10_psscene_analytic_sr_udm2/PSScene/", 
+                        pattern = "\\.tif$", full.names = TRUE)
+
+# Create an empty list to store processed rasters
+processed_rasters <- list()
+
+# Loop through each file in the list
+for (raster_file in new_files) {
+  
+  # Load the raster
+  dat2 <- brick(raster_file)
+  
+  # Reproject dat2 to match the CRS of dat1
+  dat2_reprojected <- projectRaster(dat2, crs = crs(ref_raster))
+  
+  # Resample dat2 to match the resolution of dat1
+  dat2_resampled <- resample(dat2_reprojected, ref_raster)
+  
+  # Crop dat2 to match the extent of dat1
+  dat2_cropped <- crop(dat2_resampled, extent(ref_raster))
+  
+  # If needed, select specific layers from dat2 to match the number of layers in dat1
+  dat2_final <- dat2_cropped[[1:4]]  # Adjust the layer index if necessary
+  
+  # Add the processed raster to the list
+  processed_rasters[[raster_file]] <- dat2_final
+}
+
+# Now processed_rasters contains all the reprojected, resampled, and cropped rasters
+
+
+names(raster_files)
+
+
+
+# test bind 
+
+raster_files <- c(raster_files, processed_rasters)
+
+
+######## TEST RUN #############
+
+# Initialize an empty list to store results
+all_results <- list()
+
+# Loop through each raster file
+for (raster_file in raster_files) {
+  # Extract the date from the filename
+  date_str <- gsub("^(\\d{8})_.*", "\\1", basename(raster_file))
+  raster_date <- as.Date(date_str, format = "%Y%m%d")
+  
+  # Load the raster and calculate NDVI
+  dat <- brick(raster_file)
+  
+  # Check and align CRS
+  if (!st_crs(all_plots) == crs(dat)) {
+    all_plots <- st_transform(all_plots, crs = crs(dat))  # Reproject shapefile if needed
+  }
+  
+  # Check if extents overlap
+  raster_extent <- extent(dat)
+  plots_extent <- extent(st_bbox(all_plots))
+  
+  # If the extents do not overlap, skip this raster
+  if (is.null(intersect(raster_extent, plots_extent))) {
+    warning(paste("Raster and shapefile extents do not overlap for", raster_file))
+    next  # Skip this raster if extents do not overlap
+  }
+  
+  # Calculate NDVI
+  dat <- ndviFUN(dat)
+  
+  # Crop and mask raster
+  cropped_raster <- crop(dat, plots_extent)
+  trimmed_raster <- mask(cropped_raster, all_plots)
+  
+  # Calculate mean NDVI for each polygon
+  ndvi_values <- extract(trimmed_raster, all_plots, fun = mean, na.rm = TRUE, df = TRUE)
+  
+  # Create a dataframe with the results
+  ndvi_df <- data.frame(
+    Plot_ID = all_plots$Name,  # Replace 'Name' with the appropriate column name
+    Mean_NDVI = ndvi_values[, 2],  # Adjust index if necessary
+    Date = raster_date
+  )
+  
+  # Append the results to the list
+  all_results[[raster_file]] <- ndvi_df
+}
+
+
+# Combine all individual dataframes into one single dataframe
+final_results <- do.call(rbind, all_results)
+
+final_results <- final_results[final_results$Mean_NDVI >= 0 & !is.na(final_results$Mean_NDVI), ]
+
+final_results$treatment <- ifelse(test = final_results$Plot_ID == "Plot 1" |
+                                    final_results$Plot_ID == "Plot 3" |
+                                    final_results$Plot_ID == "Plot 5" |
+                                    final_results$Plot_ID == "Plot 8" |
+                                    final_results$Plot_ID == "Plot 10", 
+                                  yes = "Conventional", no = "Conservation")
+
+# View the final combined dataframe
+head(final_results)
+
+
+write.csv(x = final_results, file = "ndvi/data/prcoessed.data/new_ndvi_data.csv")
+
+
+
+
+
+## 03 SUMMARY STATS ####
+
+
+ndvi_sum <- final_results %>%
+  group_by(treatment, Date) %>%
+  summarise( 
+    n = n(),
+    mean = mean(Mean_NDVI, na.rm = TRUE),  # Exclude NAs when calculating mean
+    sd = sd(Mean_NDVI, na.rm = TRUE)       # Exclude NAs when calculating sd
+  ) %>%
+  mutate(se = sd / sqrt(n)) %>%
+  mutate(ic = se * qt((1 - 0.05) / 2 + 0.5, n - 1))  # Confidence interval
+
+glimpse(ndvi_sum)
+
+
+
+
+
+
+
+## 04 PLOTS ####
+
+ggplot(ndvi_sum, aes(y = mean, x = Date, color = treatment)) +
+  geom_point() +  # Add points for each observation
+  geom_line(aes(group = treatment), alpha = 0.7) +  # Add lines to connect points by treatment
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se, fill = treatment), alpha = 0.2) +  # Add the error ribbon
+  theme_minimal() +  # Clean theme
+  labs(
+    x = "Date",
+    y = "Mean NDVI",
+    color = "Treatment",
+    fill = "Treatment"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for clarity
+        legend.position = "bottom") +
+  scale_x_date(
+    breaks = date_breaks("month"),  # Adjust the frequency of x-axis ticks
+    labels = date_format("%m/%Y")  # Format the date labels
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## 02 FUNCTIONS ####
@@ -106,8 +352,7 @@ glimpse(final_ndvi_df)
 # Save the combined dataframe to CSV
 write.csv(final_ndvi_df, "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv", row.names = FALSE)
 
-# Print the final dataframe
-glimpse(final_ndvi_df)
+
 
 
 
@@ -115,9 +360,16 @@ glimpse(final_ndvi_df)
 ###########################################################################
 
 
+dat1 <- read.csv(file = "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv")
+dat2 <- read.csv(file = "ndvi/data/prcoessed.data/new_ndvi_data.csv")
+
+dat2 <- dat2[,2:ncol(dat2)]
+
+final_ndvi_df <- rbind(dat1, dat2)
+
+
 ## 03 SUMMARY STATS ####
 
-dat <- final_ndvi_df
 
 ndvi_sum <- final_ndvi_df %>%
   group_by(treatment, Date) %>%
@@ -133,17 +385,27 @@ glimpse(ndvi_sum)
 
 
 
+
+
+
+
 ## 04 PLOTS ####
-library(scales)
 
+# Convert Date column to Date type if not already
+ndvi_sum$Date <- as.Date(ndvi_sum$Date)
 
-ggplot(ndvi_sum, aes(y = mean, x = Date, color = treatment)) +
-  geom_point() +  # Add points for each observation
-  geom_line(aes(group = treatment), alpha = 0.7) +  # Add lines to connect points by treatment
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se, fill = treatment), alpha = 0.2) +  # Add the error ribbon
+ggplot(data = ndvi_sum, 
+       aes(y = mean, x = Date, color = treatment)) +
+  geom_point(size = 1) +  # Add points for each observation
+  geom_line(
+    aes(group = treatment), 
+    alpha = 0.7) +  # Add lines to connect points by treatment
+  geom_ribbon(
+    aes(ymin = mean - se, ymax = mean + se, fill = treatment), 
+    alpha = 0.5, 
+    color = NA) +  # Add the error ribbon
   theme_minimal() +  # Clean theme
   labs(
-    title = "NDVI vs Date by Treatment with Error Ribbon",
     x = "Date",
     y = "Mean NDVI",
     color = "Treatment",
@@ -152,44 +414,17 @@ ggplot(ndvi_sum, aes(y = mean, x = Date, color = treatment)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for clarity
         legend.position = "bottom") +
   scale_x_date(
-    breaks = date_breaks("month"),  # Adjust the frequency of x-axis ticks
+    breaks = date_breaks("8 weeks"),  # Adjust the frequency of x-axis ticks
     labels = date_format("%m/%Y")  # Format the date labels
   )
 
-
-
-## animation ####
-
-
-final_ndvi_df$Date <- as.Date(final_ndvi_df$Date)
-head(final_ndvi_df$Date)
+ggsave(filename = "agronomy/plots/fig_ndvi_plot.png", width = 10, height = 6)
 
 
 
-p <- ggplot(final_ndvi_df, aes(x = Plot_ID, y = Mean_NDVI, color = treatment)) +
-  geom_point(size = 3) + 
-  theme_minimal() +
-  labs(title = 'NDVI Over Time', x = 'Plot ID', y = 'Mean NDVI') +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-# Base plot without animation
-ggplot(final_ndvi_df, aes(x = Plot_ID, y = Mean_NDVI, color = treatment)) +
-  geom_point(size = 3) + 
-  theme_minimal() +
-  labs(title = 'NDVI Over Time', x = 'Plot ID', y = 'Mean NDVI') +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-# Try adding transition_time
-p + transition_time(Date)
 
 
-animated_plot <- p + 
-  transition_states(Date, transition_length = 2, state_length = 1) +
-  labs(subtitle = 'Date: {closest_state}')
 
-# Animate with `transition_states`
-animate(animated_plot, nframes = length(unique(final_ndvi_df$Date)), 
-        duration = 10, width = 800, height = 600)
 
 
 
