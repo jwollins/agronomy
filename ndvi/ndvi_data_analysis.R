@@ -38,60 +38,7 @@ raster_files <- list.files("ndvi/data/QGIS.rasters", pattern = "\\.tif$", full.n
 
 
 
-
-
-
-
-
-# Load raster
-dat2 <- brick("ndvi/data/2023_06_to_2024_10_psscene_analytic_sr_udm2/PSScene/20230904_102308_37_24b0_3B_AnalyticMS_SR_clip.tif")
-
-# Reproject dat2 to match the CRS of dat1
-dat2_reprojected <- projectRaster(dat2, crs = crs(dat1))
-
-# Resample dat2 to match the resolution of dat1
-dat2_resampled <- resample(dat2_reprojected, dat1)
-
-# Crop dat2 to match the extent of dat1
-dat2_cropped <- crop(dat2_resampled, extent(dat1))
-
-# If needed, select specific layers from dat2 to match the number of layers in dat1
-dat2_final <- dat2_cropped[[1:4]]  # Adjust the layer index if necessary
-
-# Now dat2_final should match the CRS, resolution, extent, and number of layers of dat1
-
-
-dat <- ndviFUN(dat2_final)
-
-plot(dat2_final)
-
-
-
-
-
-
-
-
-
-
-# Reproject and align to dat1
-dat2_reprojected <- projectRaster(dat2, to = dat1)
-
-# Optional: Resample (not strictly necessary if `projectRaster(to = dat1)` was used)
-dat2_resampled <- resample(dat2_reprojected, dat1)
-
-# Confirm extent and CRS
-print(crs(dat2_resampled))
-print(extent(dat2_resampled))
-print(extent(dat1))
-plot(dat2_resampled)
-crs(dat1)
-
-
-
-
-
-## test of forloop ###
+## 02 DATA FORLOOP ####
 
 # Define the reference raster (dat1)
 ref_raster <- brick("ndvi/data/QGIS.rasters/2022_03_08_QGIS.tif")
