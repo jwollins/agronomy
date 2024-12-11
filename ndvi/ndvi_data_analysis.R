@@ -341,6 +341,8 @@ glimpse(ndvi_sum)
 # Convert Date column to Date type if not already
 ndvi_sum$Date <- as.Date(ndvi_sum$Date)
 
+ndvi_sum$treatment <- factor(ndvi_sum$treatment, levels = c("Conventional", "Conservation"))
+
 ggplot(data = ndvi_sum, 
        aes(y = mean, x = Date, color = treatment)) +
   geom_point(size = 1) +  # Add points for each observation
@@ -365,12 +367,16 @@ ggplot(data = ndvi_sum,
     labels = date_format("%m/%Y")  # Format the date labels
   )
 
-ggsave(filename = "agronomy/plots/fig_ndvi_plot.png", width = 10, height = 6)
+ggsave(filename = "agronomy/plots/fig_ndvi_plot.png", width = 8, height = 4)
 
 
 
+shapiro.test(final_ndvi_df$Mean_NDVI)
 
 
+glm_model <- glm(formula = Mean_NDVI ~ treatment, data = final_ndvi_df)
+
+summary(glm_model)
 
 
 
