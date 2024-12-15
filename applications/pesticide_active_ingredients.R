@@ -3,8 +3,6 @@
 ## Joe Collins 
 ## 2024-12-08
 
-setwd(dir = "~/OneDrive - Harper Adams University/Data/agronomy/")
-
 ## 01 Packages ####
 
 suppressPackageStartupMessages({
@@ -30,15 +28,135 @@ suppressPackageStartupMessages({
 })
 
 
-## 02 - Data ####
+## 02 - Load Data ####
 
-ap_dat <- read.csv(file = "data/spray_plans/normalized_application_data.csv")
+setwd(dir = "~/OneDrive - Harper Adams University/Data/LCA/")
 
-ap_dat$treatment <- as.factor(ap_dat$treatment)
-ap_dat$crop <- as.factor(ap_dat$crop)
-ap_dat$year <- as.factor(ap_dat$year)
+### ppp data ####
+ap_cat_sum <- read.csv(file = "data/processed_data/AI_category_summary.csv")
+ap_cat_sum$treatment <- as.factor(ap_cat_sum$treatment)
+ap_cat_sum$year <- as.factor(ap_cat_sum$year)
+ap_cat_sum$category <- as.factor(ap_cat_sum$category)
+
+### fertiliser data ####
+fert_el_sum <- read.csv(file = "data/processed_data/fert_elem_sum.csv")
+fert_el_sum$treatment <- as.factor(fert_el_sum$treatment)
+fert_el_sum$year <- as.factor(fert_el_sum$year)
+fert_el_sum$chem_element <- as.factor(fert_el_sum$chem_element)
+
+# Filter out rows where 'category' is 'Fertiliser'
+fert_el_sum <- fert_el_sum %>%
+  filter(chem_element != "NA")
+
+# set the factor levels
+fert_el_sum$chem_element <- factor(fert_el_sum$chem_element, levels = c("N","P", "K", "S", "Ca", "Mg", "B", "Cu", "Mn", "Mo", "Zn"))
+levels(fert_el_sum$chem_element)
 
 
+test <- read.csv(file = "data/processed_data/normalized_application_data.csv")
+
+test$active_ingredient
+
+
+
+
+
+
+## 04 PLOTS #####
+
+setwd(dir = "~/OneDrive - Harper Adams University/Data/agronomy/plots/")
+
+
+### Crop PPP category plot ####
+
+ggplot(data = ap_cat_sum, 
+       aes(x = year, 
+           y = Total_Active_Ingredient_kg_ha, 
+           group = treatment, 
+           fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge", 
+           colour = "black") + 
+  labs(
+    x = "Crop Type",
+    y = expression(Total~Active~Ingredient~(kg^{-1}))  ) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +
+  theme(
+    strip.text.x = element_text(size = 12, 
+                                color = "black", 
+                                face = "bold.italic"), 
+    legend.position = "bottom", 
+    axis.title.x = element_blank()
+  ) +
+  facet_wrap(~ category, 
+             ncol = 3, 
+             scales = 'free_y')
+
+ggsave(filename = "ap_plot_all.png")
+
+
+
+
+
+### Fert element plot ####
+
+ggplot(data = fert_el_sum, 
+       aes(x = year, 
+           y = Total_Active_Ingredient_kg_ha, 
+           group = treatment, 
+           fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge", 
+           colour = "black") + 
+  labs(
+    x = "Crop Type",
+    y = expression(Chemical~Element~(kg^{-1}))  ) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +
+  theme(
+    strip.text.x = element_text(size = 12, 
+                                color = "black", 
+                                face = "bold.italic"), 
+    legend.position = "bottom", 
+    axis.title.x = element_blank()
+  ) +
+  facet_wrap(~ chem_element, 
+             ncol = 3, 
+             scales = 'free_y')
+
+ggsave(filename = "fert_chem_elem_plot.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 03 Plots ####
 
 title <- expression(Active~Ingredient~rate~(g~ha^{-1}))
 
