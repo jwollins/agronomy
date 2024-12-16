@@ -55,6 +55,8 @@ df_tidy$date <- as.Date(df_tidy$date)
 
 class(df_tidy$date)
 
+df_tidy$treatment <- factor(x = df_tidy$treatment, levels = c("Conventional", "Conservation"))
+
 
 # Plot using position_dodge to separate treatments
 ggplot(df_tidy, aes(x = fct_rev(fct_inorder(crop)), 
