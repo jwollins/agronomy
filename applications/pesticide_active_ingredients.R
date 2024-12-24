@@ -53,9 +53,9 @@ fert_el_sum$chem_element <- factor(fert_el_sum$chem_element, levels = c("N","P",
 levels(fert_el_sum$chem_element)
 
 
-test <- read.csv(file = "data/processed_data/normalized_application_data.csv")
-
-test$active_ingredient
+# test <- read.csv(file = "data/processed_data/normalized_application_data.csv")
+# 
+# test$active_ingredient
 
 
 
