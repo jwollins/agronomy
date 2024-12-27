@@ -230,7 +230,9 @@ ggsave(filename = "plots/interp_grid.png", height = 8, width = 6)
 # 
 # dev.off()
 
-ggarrange(a,b, ncol = 2)
+b <- b + theme(axis.text.y=element_blank()) 
+
+ggarrange(a,b, ncol = 2, nrow = 1)
 
 
 
@@ -285,7 +287,7 @@ glimpse(dat_wheat)
 
 ## 02 Varigram fitting ####
 
-# Varigram
+## Beans ####
 
 class(dat_beans)
 
@@ -309,6 +311,30 @@ plot(vario.fit)
 
 
 plot(vario, vario.fit$var_model, main = title_exp)
+
+
+### Wheat ####
+
+vario <-  variogram(t_ha ~ 1, dat_wheat)
+
+
+vario.fit = autofitVariogram(
+  t_ha ~ 1,
+  dat_wheat,
+  model = c("Ste", "Sph", "Mat", "Exp", "Gau"),
+  #The list of variogrammodels that will be tested.
+  kappa = c(0.05, seq(0.2, 2, 0.1), 5, 10),
+  # Smoothing parameter of the Matern model. Provide a list if you want to check more than one value.
+  fix.values = c(NA, NA, NA),
+  #nugget, range and sill respectively NA means that the value is not fixed.
+  start_vals = c(NA, NA, NA),
+  verbose = T
+) # if TRUE the function will give extra feedback on the fitting process
+
+plot(vario.fit)
+
+
+plot(vario, vario.fit$var_model, main = )
 
  
  
@@ -341,13 +367,13 @@ plot(vario, vario.fit$var_model, main = title_exp)
 
 ## 06 Kriging ####
 
+### Beans ####
+
 #Perform ordinary kriging and store results inside object of type "autoKrige" "list" 
-
-
 kriging_result = autoKrige(t_ha ~ 1, dat_beans, f_grid)
 
 #open png for file save and define size and resolution
-png(paste("plots/", "t_ha_krige_plot", ".png", sep=""),
+png(paste("plots/", "beans_t_ha_krige_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
 plot(kriging_result)
@@ -360,19 +386,57 @@ summary(kriging_result)
 # Cast the Spatial object to a data.frame
 
 
-ggplot_data = as.data.frame(kriging_result$krige_output)
+beans_data = as.data.frame(kriging_result$krige_output)
 
-names(ggplot_data)[names(ggplot_data) == "var1.pred"] <- "Yield"
+names(beans_data)[names(beans_data) == "var1.pred"] <- "Yield"
 
 
 
-### plot the krige output ####
+### Wheat ####
+
+#Perform ordinary kriging and store results inside object of type "autoKrige" "list" 
+kriging_result = autoKrige(t_ha ~ 1, dat_wheat, f_grid)
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "yield_krige_plot", ".png", sep=""),
+png(paste("plots/", "wheat_t_ha_krige_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
-ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values),
+plot(kriging_result)
+
+dev.off()
+
+class(kriging_result)
+summary(kriging_result)
+
+# Cast the Spatial object to a data.frame
+
+
+wheat_data = as.data.frame(kriging_result$krige_output)
+
+names(wheat_data)[names(wheat_data) == "var1.pred"] <- "Yield"
+
+
+
+
+
+
+
+
+## 07 PLOTS ####
+
+### Krige plots ####
+
+#### Beans ####
+
+#open png for file save and define size and resolution
+png(paste("plots/", "beans_yield_krige_plot", ".png", sep=""),
+    width=1000, height=1000, res=150)
+
+b <- ggplot()+ 
+  geom_point(data = df.image, 
+             aes(y = Latitude,
+                 x = Longitude,
+                 color = Values),
                      show.legend = FALSE) +
   scale_colour_gradient(
     low = "white",
@@ -381,7 +445,7 @@ ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values)
     na.value = "grey50",
     guide = "colourbar",
     aesthetics = "colour") +
-  geom_raster(data = ggplot_data, aes(x = x, y = y, fill = Yield)) + 
+  geom_raster(data = beans_data, aes(x = x, y = y, fill = Yield)) + 
   scale_fill_gradient(low = 'yellow',
                       high = 'darkgreen') +
   ggtitle("Conservation Agriculture Systems Experiment") +
@@ -395,7 +459,7 @@ ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values)
   theme(axis.title.y = element_text(size = 12, face = "bold")) +
   labs(subtitle = "Interpolated Yield. Spring Beans var. Lynx 2022") + 
   theme(legend.position="bottom") +
-  labs(fill = "Yield (t/ha)") +
+  labs(fill = expression(Yield~(t~ha^{-1}))) +
   theme(legend.position="bottom",
         legend.key.width= unit(1, 'cm')) +
   annotation_north_arrow(
@@ -413,7 +477,83 @@ ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values)
 
 dev.off()
 
-mean(ggplot_data$Yield)
+
+
+
+#### Wheat ####
+
+#open png for file save and define size and resolution
+png(paste("plots/", "wheat_yield_krige_plot", ".png", sep=""),
+    width=1000, height=1000, res=150)
+
+w <- ggplot()+ 
+  geom_point(data = df.image, 
+             aes(y = Latitude,
+                 x = Longitude,
+                 color = Values),
+             show.legend = FALSE) +
+  scale_colour_gradient(
+    low = "white",
+    high = "darkgrey",
+    space = "Lab",
+    na.value = "grey50",
+    guide = "colourbar",
+    aesthetics = "colour") +
+  geom_raster(data = wheat_data, aes(x = x, y = y, fill = Yield)) + 
+  scale_fill_gradient(low = 'yellow',
+                      high = 'darkgreen') +
+  ggtitle("Conservation Agriculture Systems Experiment") +
+  xlab(element_blank()) + 
+  ylab("Latitude") + 
+  xlab("Longitude") + 
+  xlim(-2.6138, -2.604) +
+  ylim(52.912, 52.917) +
+  theme(plot.title = element_text(size = 14, face = "bold")) + 
+  theme(axis.title.x = element_text(size = 12, face = "bold")) + 
+  theme(axis.title.y = element_text(size = 12, face = "bold")) +
+  labs(subtitle = "Interpolated Yield. Winter Wheat var. Extase 2023") + 
+  theme(legend.position="bottom") +
+  labs(fill = expression(Yield~(t~ha^{-1}))) +
+  theme(legend.position="bottom",
+        legend.key.width= unit(1, 'cm')) +
+  annotation_north_arrow(
+    location = "tl",
+    pad_x = unit(0.5, "in"),
+    pad_y = unit(0.25, "in"),
+    style = north_arrow_fancy_orienteering) +
+  annotation_scale(
+    location = "br",
+    pad_x = unit(1, "cm"),
+    pad_y = unit(1, "cm")) +
+  coord_sf(xlim = c(-2.6138, -2.604), 
+           ylim = c(52.912, 52.917),
+           crs = 4326)
+
+dev.off()
+
+
+# Remove titles and subtitles for both plots
+b <- b + theme(plot.title = element_blank(),    # Remove title
+               plot.subtitle = element_blank()) # Remove subtitle
+
+# Assuming 'b' and 'w' are ggplot objects
+w <- w + theme(plot.title = element_blank(),    # Remove title
+               plot.subtitle = element_blank(), # Remove subtitle
+               axis.title.y = element_blank(),  # Remove y-axis title
+               axis.text.y = element_blank(),   # Remove y-axis text
+               axis.ticks.y = element_blank())  # Remove y-axis ticks
+
+
+ggarrange(b,w, 
+          ncol = 2, 
+          nrow = 1, 
+          common.legend = TRUE,
+          legend = "bottom", 
+          align = "hv", 
+          labels = c("A","B"),
+          widths = c(1, 1))  # Ensure equal widths
+
+ggsave(filename = "plots/joint_yield_map.png", width = 10, height = 5)
 
 
 
@@ -526,22 +666,57 @@ dev.off()
 
 
 
-## 07 Comparison of treatments predictions ####
-
-
-### 07.1 CON ####
+# 08 TREATMENT COMPARISON ####
 
 coordinates(datCON_beans) <-
   ~ x + y #specify the coordinates in the dataframe
 
+coordinates(datCON_wheat) <-
+  ~ Longitude + Latitude #specify the coordinates in the dataframe
 
+
+coordinates(datCA_beans) <-
+  ~ x + y #specify the coordinates in the dataframe
+
+coordinates(datCA_wheat) <-
+  ~ Longitude + Latitude #specify the coordinates in the dataframe
+
+
+
+
+### 08.1 CON ####
+
+
+#### BEANS ####
 
 #Perform ordinary kriging and store results inside object of type "autoKrige" "list"
 
-con.krig = autoKrige(t_ha ~ 1, datCON_beans, f_grid)
+con.krig_beans = autoKrige(t_ha ~ 1, datCON_beans, f_grid)
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "con_krige_plot", ".png", sep=""),
+png(paste("plots/", "beans_con_krige_plot", ".png", sep=""),
+    width=1000, height=1000, res=150)
+
+plot(con.krig_beans)
+
+dev.off()
+
+
+# Cast the Spatial object to a data.frame
+
+con_data_beans = as.data.frame(con.krig$krige_output)
+
+names(con_data_beans)[names(con_data_beans) == "var1.pred"] <- "Yield"
+
+
+#### WHEAT ####
+
+#Perform ordinary kriging and store results inside object of type "autoKrige" "list"
+
+con.krig_wheat = autoKrige(t_ha ~ 1, datCON_wheat, f_grid)
+
+#open png for file save and define size and resolution
+png(paste("plots/", "wheat_con_krige_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
 plot(con.krig)
@@ -549,19 +724,21 @@ plot(con.krig)
 dev.off()
 
 
-
 # Cast the Spatial object to a data.frame
 
-con_data = as.data.frame(con.krig$krige_output)
+con_data_wheat = as.data.frame(con.krig$krige_output)
 
-names(con_data)[names(con_data) == "var1.pred"] <- "Yield"
+names(con_data_wheat)[names(con_data_wheat) == "var1.pred"] <- "Yield"
+
+
+
 
 
 
 #### plot CON krige ####
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "con_yield_plot", ".png", sep=""),
+png(paste("plots/", "beans_con_yield_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
 ggplot()+ geom_point(data = df.image, 
@@ -576,7 +753,8 @@ ggplot()+ geom_point(data = df.image,
     na.value = "grey50",
     guide = "colourbar",
     aesthetics = "colour") +
-  geom_raster(data = con_data, aes(x = x, y = y, fill = Yield)) +
+  geom_raster(data = con_data_beans,
+              aes(x = x, y = y, fill = Yield)) +
   scale_fill_gradient(low = 'yellow', 
                       high = muted('darkgreen'),
                       name = "Yield (t/ha)",
@@ -592,7 +770,7 @@ ggplot()+ geom_point(data = df.image,
   theme(plot.title = element_text(size = 14, face = "bold")) + 
   theme(axis.title.x = element_text(size = 12, face = "bold")) + 
   theme(axis.title.y = element_text(size = 12, face = "bold")) +
-  labs(size = title_exp, 
+  labs(expression(Yield~(t~ha^{-1})), 
        subtitle = "Yield estimation - Conventional") +
   theme(legend.position="bottom",
         legend.key.width= unit(1, 'cm')) +
@@ -736,18 +914,22 @@ dev.off()
 # dev.off()
 
 
-### 07.2 CA ####
 
-coordinates(datCA_beans) <-
-  ~ x + y #specify the coordinates in the dataframe
+
+
+
+
+### 08.2 CA ####
+
+#### BEANS ####
 
 #Perform ordinary kriging and store results inside object of type "autoKrige" "list"
 
-ca.krig = autoKrige(t_ha ~ 1, datCA_beans, f_grid)
+ca.krig_beans = autoKrige(t_ha ~ 1, datCA_beans, f_grid)
 
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "ca_krige_plot", ".png", sep=""),
+png(paste("plots/", "beans_ca_krige_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
 plot(ca.krig)
@@ -756,13 +938,40 @@ dev.off()
 
 # Cast the Spatial object to a data.frame
 
-ca_data = as.data.frame(ca.krig$krige_output)
+ca_data_beans = as.data.frame(ca.krig$krige_output)
 
-names(ca_data)[names(ca_data) == "var1.pred"] <- "Yield"
+names(ca_data_beans)[names(ca_data_beans) == "var1.pred"] <- "Yield"
+
+
+
+#### WHEAT ####
+
+#Perform ordinary kriging and store results inside object of type "autoKrige" "list"
+
+ca.krig_wheat = autoKrige(t_ha ~ 1, datCA_wheat, f_grid)
 
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "ca_yield_plot", ".png", sep=""),
+png(paste("plots/", "wheat_ca_krige_plot", ".png", sep=""),
+    width=1000, height=1000, res=150)
+
+plot(ca.krig)
+
+dev.off()
+
+# Cast the Spatial object to a data.frame
+
+ca_data_wheat = as.data.frame(ca.krig$krige_output)
+
+names(ca_data_wheat)[names(ca_data_wheat) == "var1.pred"] <- "Yield"
+
+
+
+
+
+
+#open png for file save and define size and resolution
+png(paste("plots/", "ca_yield_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
 ggplot()+ geom_point(data = df.image, 
@@ -870,27 +1079,43 @@ dev.off()
 
 
 
-## 08 Estimation Comparison ####
-
-con.value <- con_data$Yield
-ca.value <- ca_data$Yield
-diff.yield <- con_data$Yield - con_data$ca.value
-
-con_data$ca <- ca.value
-
-con_data$diff.yield <- con_data$Yield - con_data$ca
-
-con_data$pc.inc <- (con_data$diff.yield / con_data$ca) * 100
-
-con_data$ca.value <- ca.value
+## 09 Estimation Comparison ####
 
 
+### BEANS ####
+
+con.value <- con_data_beans$Yield
+ca.value <- ca_data_beans$Yield
+diff.yield <- con_data_beans$Yield - con_data_beans$ca.value
+con_data_beans$ca <- ca.value
+con_data_beans$diff.yield <- con_data_beans$Yield - con_data_beans$ca
+con_data_beans$pc.inc <- (con_data_beans$diff.yield / con_data_beans$ca) * 100
+con_data_beans$ca.value <- ca.value
+
+
+### WHEAT ####
+
+con.value <- con_data_wheat$Yield
+ca.value <- ca_data_wheat$Yield
+diff.yield <- con_data_wheat$Yield - con_data_wheat$ca.value
+con_data_wheat$ca <- ca.value
+con_data_wheat$diff.yield <- con_data_wheat$Yield - con_data_wheat$ca
+con_data_wheat$pc.inc <- (con_data_wheat$diff.yield / con_data_wheat$ca) * 100
+con_data_wheat$ca.value <- ca.value
+
+
+
+
+## PLOTS ####
+
+
+### BEANS ####
 
 #open png for file save and define size and resolution
-png(paste("kriging/plots/beans_plots/", "beans_yield_diff_plot", ".png", sep=""),
+png(paste("plots/", "beans_yield_diff_plot", ".png", sep=""),
     width=1000, height=1000, res=150)
 
-ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values),
+b <- ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values),
                      show.legend = FALSE) +
   scale_colour_gradient(
     low = "white",
@@ -899,24 +1124,24 @@ ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values)
     na.value = "grey50",
     guide = "colourbar",
     aesthetics = "colour") +
-  geom_raster(data = con_data, aes(x = x, y = y, fill = diff.yield)) +
+  geom_raster(data = con_data_beans, aes(x = x, y = y, fill = diff.yield)) +
   # coord_fixed() +
   scale_fill_gradient2(low = 'darkgreen', 
                        mid = "yellow", 
                        high = 'darkred',
-                       name = "Yield difference (t/ha)",
+                       name = expression(Yield~t~ha^{-1}),
                        breaks = c(-2, -1, 0, 1, 2),
-                       labels = c("+2t/ha Conservation",
-                                  "+1t/ha Conservation", 
+                       labels = c(expression(+2~t~ha^{-1}~Conservation),
+                                  expression(+1~t~ha^{-1}~Conservation), 
                                   "Equal Yield", 
-                                  "+1 t/ha Conventional", 
-                                  "+2 t/ha Conventional")) +
+                                  expression(+1~t~ha^{-1}~Conventional), 
+                                  expression(+2~t~ha^{-1}~Conventional))) +
   xlim(-2.6138, -2.604) +
   ylim(52.912, 52.917) +
   theme(plot.title = element_text(size = 14, face = "bold")) + 
   theme(axis.title.x = element_text(size = 12, face = "bold")) + 
   theme(axis.title.y = element_text(size = 12, face = "bold")) +
-  labs(size = title_exp, 
+  labs(size = expression(Yield~t~ha^{-1}), 
        y = "Latitude",
        x = "Longitude",
        subtitle = "Yield difference (t/ha)",
@@ -936,9 +1161,102 @@ ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values)
            ylim = c(52.912, 52.917),
            crs = 4326)
 
-
-
  dev.off()
+ 
+ 
+ 
+ ### WHEAT ####
+ 
+ #open png for file save and define size and resolution
+ png(paste("plots/", "wheat_yield_diff_plot", ".png", sep=""),
+     width=1000, height=1000, res=150)
+ 
+w <- ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Values),
+                      show.legend = FALSE) +
+   scale_colour_gradient(
+     low = "white",
+     high = "darkgrey",
+     space = "Lab",
+     na.value = "grey50",
+     guide = "colourbar",
+     aesthetics = "colour") +
+   geom_raster(data = con_data_wheat, 
+               aes(x = x, y = y, fill = diff.yield)) +
+   # coord_fixed() +
+  scale_fill_gradient2(low = 'darkgreen', 
+                       mid = "yellow", 
+                       high = 'darkred',
+                       name = expression(Yield~t~ha^{-1}),
+                       breaks = c(-2, -1, 0, 1, 2),
+                       labels = c(expression(+2~t~ha^{-1}~Conservation),
+                                  expression(+1~t~ha^{-1}~Conservation), 
+                                  "Equal Yield", 
+                                  expression(+1~t~ha^{-1}~Conventional), 
+                                  expression(+2~t~ha^{-1}~Conventional))) +
+   xlim(-2.6138, -2.604) +
+   ylim(52.912, 52.917) +
+   theme(plot.title = element_text(size = 14, face = "bold")) + 
+   theme(axis.title.x = element_text(size = 12, face = "bold")) + 
+   theme(axis.title.y = element_text(size = 12, face = "bold")) +
+   labs(size = expression(Yield~t~ha^{-1}), 
+        y = "Latitude",
+        x = "Longitude",
+        subtitle = "Wheat Yield difference (t/ha)",
+        title = "Conservation Agriculture Systems Experiment") + 
+   theme(legend.position="bottom",
+         legend.key.width= unit(2, 'cm')) +
+   annotation_north_arrow(
+     location = "tl",
+     pad_x = unit(0.5, "in"),
+     pad_y = unit(0.25, "in"),
+     style = north_arrow_fancy_orienteering) +
+   annotation_scale(
+     location = "br",
+     pad_x = unit(1, "cm"),
+     pad_y = unit(1, "cm")) +
+   coord_sf(xlim = c(-2.6138, -2.604), 
+            ylim = c(52.912, 52.917),
+            crs = 4326)
+ 
+ w
+ 
+ dev.off()
+ 
+ 
+ 
+ 
+ 
+ 
+ ### COMBINED PLOT ####
+ 
+ # Remove titles and subtitles for both plots
+ b <- b + theme(plot.title = element_blank(),    # Remove title
+                plot.subtitle = element_blank()) # Remove subtitle
+ 
+ # Assuming 'b' and 'w' are ggplot objects
+ w <- w + theme(plot.title = element_blank(),    # Remove title
+                plot.subtitle = element_blank(), # Remove subtitle
+                axis.title.y = element_blank(),  # Remove y-axis title
+                axis.text.y = element_blank(),   # Remove y-axis text
+                axis.ticks.y = element_blank())  # Remove y-axis ticks
+ 
+ 
+ ggarrange(b,w, 
+           ncol = 2, 
+           nrow = 1, 
+           common.legend = TRUE,
+           legend = "bottom", 
+           align = "hv", 
+           labels = c("A","B"),
+           widths = c(1, 1))  # Ensure equal widths
+ 
+ ggsave(filename = "plots/joint_yield_difference_maps.png", width = 10, height = 5)
+ 
+ 
+ 
+ ggarrange(con.krig_beans, ca.krig_beans)
+ 
+ 
  
  
  
@@ -1053,6 +1371,36 @@ f + geom_text(aes(label = mean), vjust = -0.2)
 
 
 
+
+
+
+### krige output plots ####
+
+library(ggplot2)
+library(ggpubr)
+library(magick)
+
+# Load the PNG files as grobs
+con_grob_beans <- magick::image_read("plots/beans_con_krige_plot.png")
+ca_grob_beans <- magick::image_read("plots/beans_ca_krige_plot.png")
+
+con_grob_wheat <- magick::image_read("plots/wheat_con_krige_plot.png")
+ca_grob_wheat <- magick::image_read("plots/wheat_ca_krige_plot.png")
+
+# Convert the images to ggplot objects
+p1 <- ggplot() + annotation_custom(grid::rasterGrob(con_grob_beans)) + theme_void()
+p2 <- ggplot() + annotation_custom(grid::rasterGrob(ca_grob_beans)) + theme_void()
+p3 <- ggplot() + annotation_custom(grid::rasterGrob(con_grob_wheat)) + theme_void()
+p4 <- ggplot() + annotation_custom(grid::rasterGrob(ca_grob_wheat)) + theme_void()
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 2, 
+          nrow = 2, 
+          labels = c("A - Conventional Bean Yield","B - Conservation Bean Yield",
+                     "C - Conventional Wheat Yield","D - Conservation Wheat Yield"), 
+          label.x = -0.2)
+
+ggsave(filename = "plots/variogram_yields.png")
 
 
 
