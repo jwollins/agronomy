@@ -25,7 +25,8 @@ dat <- filter(dat, treatment == "Conventional" | treatment == "Conservation")
 # Organise factors
 dat$plot <- as.factor(dat$plot)
 dat$block <- as.factor(dat$block)
-dat$Treatment <- as.factor(dat$treatment)
+dat$treatment <- as.factor(dat$treatment)
+dat$year <- as.factor(dat$year)
 
 dat$target_plants_m2 <- 0
 dat$target_plants_m2 <- ifelse(test = dat$crop == "Spring Beans", yes = 50, no = dat$target_plants_m2)
@@ -75,11 +76,10 @@ dat$pc_reccomended_plants <- (dat$plants_m2 / dat$target_plants_m2) * 100
 
 dat$loss_pc <- (1 - (dat$plants_m2 / dat$seeds_m2)) * 100
 
-dat$harvest_index <- (dat$grain_m2 / (dat$biomass_dm_m2 + dat$grain_m2)) * 100
-
-
 dat <- dat %>%
   mutate(across(6:ncol(dat), as.numeric))
+
+dat$harvest_index <- (dat$grain_m2 / (dat$biomass_dm_m2 + dat$grain_m2)) * 100
 
 # View the result
 glimpse(dat)
@@ -519,4 +519,114 @@ c8
 ggarrange(c4, c5, c6, c7, c8, ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 
 ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
+
+
+
+
+## 04 STATS ####
+
+### 04.1 normality ####
+
+source(file = "~/Documents/GitHub/phd_tools/fun_shapiro_wilks.R")
+
+check_normality(data = dat, columns_of_interest = 6:19)
+
+outputDIR <- file.path("stats/")
+if (!dir.exists(outputDIR)) {dir.create(outputDIR)}
+
+write.csv(x = result_df, file = "stats/normality_stats.csv")
+
+
+
+
+### 04.2 visualisation ####
+
+
+### histograms ####
+
+selected_columns <- dat_y1[, 6:18]
+
+# Function to plot histogram and QQ plot for a single variable
+plot_histogram <- function(var) {
+  p1 <- ggplot(dat_y1, aes_string(x = var)) +
+    geom_histogram(bins = 30, fill = "blue", color = "black", alpha = 0.7) +
+    theme_minimal() +
+    labs(title = var, x = var, y = "Frequency")
+  
+  # p2 <- ggqqplot(dat_y1[[var]], title = paste("QQ Plot of", var)) +
+  #   theme_minimal()
+  
+  return(list(p1))
+}
+
+# Apply function to all selected variables and store the plots
+plots <- lapply(names(selected_columns), plot_histogram_qq)
+
+# Flatten the list of plots into a single list
+combined_plots <- do.call(c, plots)
+
+# Arrange all the plots in a grid layout
+ggarrange(plotlist = combined_plots, ncol = 4, nrow = 5)
+
+ggsave(filename = "plots/histograms.png")
+
+
+
+
+### qqplots ####
+
+# Function to plot histogram and QQ plot for a single variable
+plot_qq <- function(var) {
+  p2 <- ggqqplot(dat_y1[[var]], title = var) +
+    theme_minimal()
+  
+  return(list(p2))
+}
+
+# Apply function to all selected variables and store the plots
+plots <- lapply(names(selected_columns), plot_qq)
+
+# Flatten the list of plots into a single list
+combined_plots <- do.call(c, plots)
+
+# Arrange all the plots in a grid layout
+ggarrange(plotlist = combined_plots, ncol = 3, nrow = 5)
+
+ggsave(filename = "plots/qq_plots.png")
+
+
+
+
+
+
+
+
+### 04.2 GLM ####
+
+source(file = "~/Documents/GitHub/phd_tools/fun_glm_by_year.R")
+
+glimpse(dat)
+
+run_glm_and_pairwise(data = dat, columns_to_run_glm = c(6:10, 13,14,15,16,17,18)) # negative values do not run with quasi-poisson
+
+# Combine all tibbles in the list into one dataframe
+glm_summaries_df <- bind_rows(glm_summaries_list, .id = "response_variable")
+
+write.csv(x = glm_summaries_df, file = "stats/glm_summary_df.csv")
+
+
+# Combine all tibbles in the list into one dataframe
+pair_summaries_df <- bind_rows(pairwise_summaries_list, .id = "response_variable")
+
+write.csv(x = pair_summaries_df, file = "stats/pairwise_comp_df.csv")
+
+
+
+
+
+
+
+
+
+
 
