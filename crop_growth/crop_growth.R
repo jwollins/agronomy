@@ -48,6 +48,8 @@ dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Winter Wheat" & dat$treatm
 
 dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Oilseed Rape" & dat$treatment == "Conventional",
                                   yes = 2.5, no = dat$drilling_rate_kg_ha)
+dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Oilseed Rape" & dat$treatment == "Conservation",
+                                  yes = 3, no = dat$drilling_rate_kg_ha)
 dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Spring Barley" & dat$treatment == "Conservation",
                                   yes = 200, no = dat$drilling_rate_kg_ha)
 
@@ -65,6 +67,8 @@ dat$tgw <- ifelse(test = dat$crop == "Winter Wheat" & dat$treatment == "Conserva
 
 dat$tgw <- ifelse(test = dat$crop == "Oilseed Rape" & dat$treatment == "Conventional",
                                   yes = 5, no = dat$tgw)
+dat$tgw <- ifelse(test = dat$crop == "Oilseed Rape" & dat$treatment == "Conservation",
+                  yes = 5, no = dat$tgw)
 dat$tgw <- ifelse(test = dat$crop == "Spring Barley" & dat$treatment == "Conservation",
                                   yes = 50, no = dat$tgw)
 
@@ -75,6 +79,9 @@ dat$seeds_m2 <- (dat$drilling_rate_kg_ha * 100) / dat$tgw
 dat$pc_reccomended_plants <- (dat$plants_m2 / dat$target_plants_m2) * 100
 
 dat$loss_pc <- (1 - (dat$plants_m2 / dat$seeds_m2)) * 100
+
+# Replace negative values with 0
+dat$loss_pc <- pmax(dat$loss_pc, 0)
 
 dat <- dat %>%
   mutate(across(6:ncol(dat), as.numeric))
@@ -99,6 +106,13 @@ plants_m2_sum <- dat %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
+# Change the order of 'treatment' using factor()
+plants_m2_sum <- plants_m2_sum %>%
+  mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
+         year = factor(year, levels = c("2022", "2023", "2024")),
+         crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
+
+
 # Calculates mean, sd, se and IC - block
 plants_pc_m2_sum <- dat %>%
   group_by(treatment, year, crop) %>%
@@ -110,6 +124,14 @@ plants_pc_m2_sum <- dat %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
+# Change the order of 'treatment' using factor()
+plants_pc_m2_sum <- plants_pc_m2_sum %>%
+  mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
+         year = factor(year, levels = c("2022", "2023", "2024")),
+         crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
+
+
+
 loss_pc_sum <- dat %>%
   group_by(treatment, year, crop) %>%
   summarise( 
@@ -119,6 +141,13 @@ loss_pc_sum <- dat %>%
   ) %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+# Change the order of 'treatment' using factor()
+loss_pc_sum <- loss_pc_sum %>%
+  mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
+         year = factor(year, levels = c("2022", "2023", "2024")),
+         crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
+
 
 shoots_m2_sum <- dat %>%
   group_by(treatment, year) %>%
@@ -197,7 +226,7 @@ c1 <- ggplot(data = plants_m2_sum,
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
                     name = "Treatment") +
-  theme(strip.text.x = element_text(size = 12, 
+  theme(strip.text.x = element_text(size = 8, 
                                     color = "black", 
                                     face = "bold.italic"), 
         legend.position = "bottom", 
@@ -207,7 +236,7 @@ c1 <- ggplot(data = plants_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_wrap(~ year + crop, 
+  facet_wrap(~ crop, 
              ncol = 4, 
              scales = 'free_x') 
 
@@ -235,7 +264,7 @@ c2 <- ggplot(data = plants_pc_m2_sum,
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
                     name = "Treatment") +
-  theme(strip.text.x = element_text(size = 12, 
+  theme(strip.text.x = element_text(size = 8, 
                                     color = "black", 
                                     face = "bold.italic"), 
         legend.position = "bottom", 
@@ -245,7 +274,7 @@ c2 <- ggplot(data = plants_pc_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_wrap(~ year, 
+  facet_wrap(~ crop, 
              ncol = 4, 
              scales = 'free_x') 
 
@@ -280,6 +309,7 @@ title_exp <- expression(Losses~("%")~(M^{2}))  # this is the legend title with c
 
 y_title <- expression(Losses~("%")~(M^{2}))
 
+
 c3 <- ggplot(data = loss_pc_sum, 
              aes(x = treatment, 
                  y = mean, 
@@ -295,7 +325,7 @@ c3 <- ggplot(data = loss_pc_sum,
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
                     name = "Treatment") +
-  theme(strip.text.x = element_text(size = 12, 
+  theme(strip.text.x = element_text(size = 8, 
                                     color = "black", 
                                     face = "bold.italic"), 
         legend.position = "bottom", 
@@ -305,7 +335,7 @@ c3 <- ggplot(data = loss_pc_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_wrap(~ year, 
+  facet_wrap(~ crop, 
              ncol = 4, 
              scales = 'free_x') 
 
@@ -536,6 +566,19 @@ if (!dir.exists(outputDIR)) {dir.create(outputDIR)}
 
 write.csv(x = result_df, file = "stats/normality_stats.csv")
 
+# Create a LaTeX table
+norm_table <- result_df %>%
+  kbl(format = "latex", booktabs = TRUE, caption = "My Table", label = "MyLabel", digits = 2) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), # Avoid 'tabu'
+    full_width = FALSE,                 # Set to FALSE for `tabular`
+    font_size = 15                     # Adjust font size for readability
+  ) %>%
+  row_spec(0, bold = TRUE)
+
+print(norm_table)
+
+
 
 
 
@@ -544,11 +587,11 @@ write.csv(x = result_df, file = "stats/normality_stats.csv")
 
 ### histograms ####
 
-selected_columns <- dat_y1[, 6:18]
+selected_columns <- dat[, 6:19]
 
 # Function to plot histogram and QQ plot for a single variable
 plot_histogram <- function(var) {
-  p1 <- ggplot(dat_y1, aes_string(x = var)) +
+  p1 <- ggplot(dat, aes_string(x = var)) +
     geom_histogram(bins = 30, fill = "blue", color = "black", alpha = 0.7) +
     theme_minimal() +
     labs(title = var, x = var, y = "Frequency")
@@ -560,7 +603,7 @@ plot_histogram <- function(var) {
 }
 
 # Apply function to all selected variables and store the plots
-plots <- lapply(names(selected_columns), plot_histogram_qq)
+plots <- lapply(names(selected_columns), plot_histogram)
 
 # Flatten the list of plots into a single list
 combined_plots <- do.call(c, plots)
@@ -577,7 +620,7 @@ ggsave(filename = "plots/histograms.png")
 
 # Function to plot histogram and QQ plot for a single variable
 plot_qq <- function(var) {
-  p2 <- ggqqplot(dat_y1[[var]], title = var) +
+  p2 <- ggqqplot(dat[[var]], title = var) +
     theme_minimal()
   
   return(list(p2))
@@ -624,9 +667,32 @@ write.csv(x = pair_summaries_df, file = "stats/pairwise_comp_df.csv")
 
 
 
+# Relevel the factors
+dat_subset$treatment <- factor(dat_subset$treatment, levels = c("Conservation", "Conventional"))
+dat_subset$crop <- factor(dat_subset$crop, levels = c("Spring Barley", "Oilseed Rape"))
+
+# Fit the model
+glm_subset <- glm(loss_pc ~ treatment * crop, data = dat_subset, family = quasipoisson)
+
+# Summary of the model
+summary(glm_subset)
+
+# Fit the emmeans model
+emmeans_res <- emmeans(glm_subset, ~ treatment * crop)
+
+# Compare Conservation Spring Barley with Conventional Oilseed Rape
+contrast(emmeans_res, interaction = c("pairwise"), 
+         by = NULL) %>% 
+  summary(infer = TRUE)
 
 
 
+glm1 <- glm(dat$loss_pc ~ treatment * year * crop, data = dat, family = quasipoisson)
+summary(glm1)
 
+# Perform pairwise comparisons using emmeans
+emmeans_res <- emmeans(glm1, pairwise ~ treatment | year * crop)
+
+summary(emmeans_res)
 
 
