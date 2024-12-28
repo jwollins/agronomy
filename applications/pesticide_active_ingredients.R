@@ -160,7 +160,7 @@ ggsave(filename = "fert_chem_elem_plot.png")
 
 title <- expression(Active~Ingredient~rate~(g~ha^{-1}))
 
-ggplot(data = ap_dat, 
+ggplot(data = ap_cat, 
        aes(x = year, 
            y = normalized_rate_g_ha, group = treatment, 
            fill = treatment)) + 
@@ -411,6 +411,7 @@ m1 <- ggplot(data = ap_sum_filtered,
 m1
 
 
+### JOINT PLOT ####
 
 ggarrange(f1, h1, i1, pgr1, m1, 
           ncol = 5, nrow = 1, 

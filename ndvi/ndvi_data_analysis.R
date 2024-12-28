@@ -314,6 +314,8 @@ dat2 <- dat2[,2:ncol(dat2)]
 
 final_ndvi_df <- rbind(dat1, dat2)
 
+write_csv(x = final_ndvi_df, file = "ndvi/data/prcoessed.data/final_ndvi_df.csv")
+
 
 ## 03 SUMMARY STATS ####
 
@@ -378,6 +380,117 @@ glm_model <- glm(formula = Mean_NDVI ~ treatment, data = final_ndvi_df)
 
 summary(glm_model)
 
+
+
+## STATS ####
+
+### visualisation ####
+
+dat <- read.csv(file = "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv")
+
+dat1 <- read.csv(file = "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv")
+dat2 <- read.csv(file = "ndvi/data/prcoessed.data/new_ndvi_data.csv")
+
+dat2 <- dat2[,2:ncol(dat2)]
+
+dat <- rbind(dat1, dat2)
+
+glimpse(dat)
+
+# Plot histogram
+a <- ggplot(dat, aes(x = Mean_NDVI, fill = treatment)) +
+  geom_histogram(binwidth = 0.02, color = "black", alpha = 0.7, position = "dodge") +
+  labs(
+    x = "Mean NDVI",
+    y = "Count",
+    fill = "Treatment"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+
+# Create QQ plot
+b <- ggplot(dat, aes(sample = Mean_NDVI, color = treatment)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles",
+    color = "Treatment"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.position = "bottom"
+  )
+
+ggarrange(a,b, 
+          ncol = 2, 
+          common.legend = TRUE, 
+          legend = "bottom", labels = c("A", "B"))
+
+ggsave(filename = "agronomy/plots/ndvi_data_vis.png", width = 14, height = 6)
+
+
+### normality ####
+
+shapiro.test(x = dat$Mean_NDVI)
+
+bartlett.test(Mean_NDVI ~ treatment, data = dat)
+
+
+### glm model ####
+dat$Mean_NDVI[dat$Mean_NDVI <= 0] <- 1e-6
+
+glm_model <- glm(Mean_NDVI ~ treatment, 
+                 data = dat, 
+                 family = Gamma(link = "log"))
+
+summary(glm_model)
+
+
+
+
+## by crop 
+
+# Convert the Date column to Date format
+dat$Date <- as.Date(dat$Date, format = "%Y-%m-%d")
+
+# Create new column 'crop' based on the 'Date' column
+dat <- dat %>%
+  mutate(crop = case_when(
+    Date >= as.Date("2022-03-01") & Date <= as.Date("2022-10-01") ~ "Spring Beans",
+    Date >= as.Date("2022-10-15") & Date <= as.Date("2023-08-01") ~ "Winter Wheat",
+    Date >= as.Date("2023-09-01") & Date <= as.Date("2024-08-01") ~ "Oilseed Rape",
+    TRUE ~ "Other"
+  ))
+
+# Check the changes
+glimpse(dat)
+
+osr <- filter(.data = dat, crop == "Other")
+
+
+
+glm_model <- glm(Mean_NDVI ~ treatment * crop, 
+                 data = dat, 
+                 family = Gamma(link = "log"))
+
+summary(glm_model)
+
+writeLines(capture.output(glm_model), "agronomy/stats/ndvi_glm_model_summary.txt")
+
+# Perform pairwise comparisons using emmeans
+emmeans_res <- emmeans(glm_model, pairwise ~ treatment | crop)
+
+summary(emmeans_res)
+
+writeLines(capture.output(emmeans_res), "agronomy/stats/emmeans_res_summary.txt")
 
 
 

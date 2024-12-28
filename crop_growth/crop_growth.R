@@ -559,7 +559,7 @@ ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
 
 source(file = "~/Documents/GitHub/phd_tools/fun_shapiro_wilks.R")
 
-check_normality(data = dat, columns_of_interest = 6:19)
+check_normality(data = dat, columns_of_interest = c(6:8, 9:12, 17:18))
 
 outputDIR <- file.path("stats/")
 if (!dir.exists(outputDIR)) {dir.create(outputDIR)}
@@ -587,7 +587,10 @@ print(norm_table)
 
 ### histograms ####
 
-selected_columns <- dat[, 6:19]
+selected_columns <- dat[, c(6:8, 9:12, 17:18)]
+
+# Replace all zeros with NA in the entire dataframe
+# dat[dat == 0] <- NA
 
 # Function to plot histogram and QQ plot for a single variable
 plot_histogram <- function(var) {
@@ -609,7 +612,7 @@ plots <- lapply(names(selected_columns), plot_histogram)
 combined_plots <- do.call(c, plots)
 
 # Arrange all the plots in a grid layout
-ggarrange(plotlist = combined_plots, ncol = 4, nrow = 5)
+ggarrange(plotlist = combined_plots, ncol = 3, nrow = 3)
 
 ggsave(filename = "plots/histograms.png")
 
@@ -633,7 +636,7 @@ plots <- lapply(names(selected_columns), plot_qq)
 combined_plots <- do.call(c, plots)
 
 # Arrange all the plots in a grid layout
-ggarrange(plotlist = combined_plots, ncol = 3, nrow = 5)
+ggarrange(plotlist = combined_plots, ncol = 3, nrow = 3)
 
 ggsave(filename = "plots/qq_plots.png")
 
@@ -650,7 +653,12 @@ source(file = "~/Documents/GitHub/phd_tools/fun_glm_by_year.R")
 
 glimpse(dat)
 
-run_glm_and_pairwise(data = dat, columns_to_run_glm = c(6:10, 13,14,15,16,17,18)) # negative values do not run with quasi-poisson
+colnames(dat)
+
+
+### Count Data ####
+
+run_glm_and_pairwise(data = dat, columns_to_run_glm = c(6:8, 9:12, 17:18)) # negative values do not run with quasi-poisson
 
 # Combine all tibbles in the list into one dataframe
 glm_summaries_df <- bind_rows(glm_summaries_list, .id = "response_variable")
@@ -667,32 +675,123 @@ write.csv(x = pair_summaries_df, file = "stats/pairwise_comp_df.csv")
 
 
 
-# Relevel the factors
-dat_subset$treatment <- factor(dat_subset$treatment, levels = c("Conservation", "Conventional"))
-dat_subset$crop <- factor(dat_subset$crop, levels = c("Spring Barley", "Oilseed Rape"))
-
-# Fit the model
-glm_subset <- glm(loss_pc ~ treatment * crop, data = dat_subset, family = quasipoisson)
-
-# Summary of the model
-summary(glm_subset)
-
-# Fit the emmeans model
-emmeans_res <- emmeans(glm_subset, ~ treatment * crop)
-
-# Compare Conservation Spring Barley with Conventional Oilseed Rape
-contrast(emmeans_res, interaction = c("pairwise"), 
-         by = NULL) %>% 
-  summary(infer = TRUE)
 
 
 
-glm1 <- glm(dat$loss_pc ~ treatment * year * crop, data = dat, family = quasipoisson)
-summary(glm1)
 
-# Perform pairwise comparisons using emmeans
-emmeans_res <- emmeans(glm1, pairwise ~ treatment | year * crop)
 
-summary(emmeans_res)
+
+## overdispersion test ####
+
+source(file = "~/Documents/GitHub/phd_tools/fun_overdispersion_test.R")
+
+colnames(dat)
+
+# Specify column numbers to test for overdispersion
+response_column_indices <- c(6:8, 9:12, 17:18)  # Replace with the indices of the columns to test
+response_columns <- colnames(dat)[response_column_indices]  # Get the column names
+
+# Specify explanatory variables
+explanatory_columns <- c("year", "crop", "treatment")
+
+# Initialize a results list
+results_list <- lapply(response_columns, function(response_column) {
+  test_overdispersion(dat, response_column, explanatory_columns)
+})
+
+# Convert results into a dataframe
+overdis_df <- do.call(rbind, lapply(results_list, as.data.frame))
+
+# Print results
+print(overdis_df)
+
+write.csv(x = overdis_df, file = "stats/overdispersion_stats.csv")
+
+# Create a LaTeX table
+overdis_table <- overdis_df %>%
+  kbl(format = "latex", booktabs = TRUE, caption = "My Table", label = "MyLabel", digits = 2) %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"), # Avoid 'tabu'
+    full_width = FALSE,                 # Set to FALSE for `tabular`
+    font_size = 15                     # Adjust font size for readability
+  ) %>%
+  row_spec(0, bold = TRUE)
+
+print(overdis_table)
+
+# Capture the LaTeX table as a character string
+latex_code <- as.character(overdis_table)
+
+# Save the LaTeX table to a .txt file
+write(latex_code, file = "stats/overdispersion_stats.txt")
+
+
+
+## test distribution ####
+
+### SOURCE DISTRIB TESTS ####
+
+source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
+
+glimpse(dat)
+
+### POISSON ####
+
+# Specify the columns to check (replace with your actual columns)
+columns_to_check <- c(6:19)  # Example column indices (plants_m2, shoots_m2, pods_ears_m2, etc.)
+# Run the Poisson test on selected columns
+poisson_results_multiple <- check_poisson_multiple(dat, columns_to_check)
+# Print the results
+print(poisson_results_multiple)
+
+
+### GUASSIAN DIST ####
+
+# # Example usage:
+columns_to_check <- c(6:19)  # Specify your columns of interest
+distribution_results <- check_guassian(dat, columns_to_check)
+print(distribution_results)
+
+### EXPONENTIAL DIST ####
+
+columns_to_check <- c(6:19)  # Specify the columns you want to check
+exponential_results <- check_exponential_distribution(dat, columns_to_check)
+print(exponential_results)
+
+### GAMMA DIST ####
+columns_to_check <- c(6:19)  # Specify the columns you want to check
+gamma_results <- check_gamma_distribution(dat, columns_to_check)
+print(gamma_results)
+
+
+
+## homoscedasticity ####
+# Define columns to check (for example, columns 6:19)
+columns_to_check <- colnames(dat)[6:19]
+
+# Apply the function with 'treatment' as the group column
+bartlett_results <- check_homogeneity_variance_bartlett(dat, columns_to_check, "treatment")
+
+# Print the results
+print(bartlett_results)
+
+
+
+### JOIN DF'S ####
+
+dist_stats_df <- cbind(poisson_results_multiple, 
+                       distribution_results[,2:ncol(distribution_results)],
+                       exponential_results[,2:ncol(exponential_results)],
+                       gamma_results[,2:ncol(gamma_results)],
+                       bartlett_results[,2:ncol(bartlett_results)])
+
+glimpse(dist_stats_df)
+
+write.csv(x = dist_stats_df, file = "stats/distrib_stats_crop_est.csv")
+
+
+
+
+
 
 
