@@ -94,7 +94,7 @@ ggplot(data = ap_cat_sum,
              ncol = 3, 
              scales = 'free_y')
 
-ggsave(filename = "ap_plot_all.png")
+ggsave(filename = "ap_plot_all.png", width = 10, height = 6)
 
 
 
@@ -160,7 +160,7 @@ ggsave(filename = "fert_chem_elem_plot.png")
 
 title <- expression(Active~Ingredient~rate~(g~ha^{-1}))
 
-ggplot(data = ap_cat, 
+ggplot(data = ap_cat_sum, 
        aes(x = year, 
            y = normalized_rate_g_ha, group = treatment, 
            fill = treatment)) + 

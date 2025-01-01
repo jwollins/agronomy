@@ -3,7 +3,9 @@
 ## what: combine yield
 ## when: 2024-10-15
 
-setwd("OneDrive - Harper Adams University/Data/agronomy/")
+getwd()
+
+setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
 
 ## 00 packages ####
 
@@ -13,6 +15,8 @@ library(dplyr) # summary table
 library(ggpmisc)
 library(ggsignif) # significance on barplots
 library(readxl)
+library(lme4)
+library(emmeans)
 
 ## 01 DATA ####
 
@@ -122,7 +126,7 @@ library(readxl)
  # Plot weight by group and color by group
  
  ggplot(dat, aes(x = Treatment, 
-                 y = corrected_plot_t_ha)) + 
+                 y = corrected_plot_t_ha, colour = Treatment)) + 
    geom_boxplot() 
  
  
@@ -142,17 +146,107 @@ library(readxl)
  con.mean <- mean(con.dat$corrected_plot_t_ha)
  
  
+ 
+ ## check distribution ####
+ 
+ source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
+ source(file = "~/Documents/GitHub/phd_tools/fun_lmm_diagnostic_plots.R")
+ 
+ colnames(dat)
+ cols_to_analyse <- c(11,18,19,22)
+ check_gamma_distribution(data = dat, columns_to_check = cols_to_analyse)
+ check_guassian(data = dat, columns_to_check = cols_to_analyse)
+ 
+ 
  #### GLM ####
  
  # run glm with 
- glm <- glm(corrected_plot_t_ha ~ Treatment,
-             data = dat)
+ glm <- glm(corrected_plot_t_ha ~ Treatment * crop, 
+            family = gaussian, 
+            data = dat)
+
  
  summary(glm) 
- anova(glm) 
  
- aov1 <- aov(corrected_plot_t_ha ~ Treatment,
-             data = dat)
+ # Perform pairwise comparisons
+ pairwise_results <- emmeans(glm, pairwise ~ Treatment | crop)
+ 
+ # View the pairwise comparison results
+ summary(pairwise_results)
+ 
+
+ diagnostic_plots_glm(glm)
+ 
+
+ # Fit a linear mixed-effects model (LMM)
+ 
+ lmm_model <- lmer(corrected_plot_t_ha ~ Treatment + (1 | year), 
+                   data = dat)
+ 
+ # View the summary of the model
+ summary(lmm_model)
+ 
+ 
+ # Perform pairwise comparisons for the Treatment factor
+ pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
+ 
+ # View the results of the pairwise comparisons
+ summary(pairwise_comparisons)
+ 
+ # To extract only the p-values of the pairwise comparisons:
+ pairwise_comparisons$contrasts
+ 
+ 
+ 
+ ### pc yield UK ####
+ 
+ ### year as a random effect 
+ 
+ lmm_model <- lmer(yield_percent_uk ~ Treatment + (1 | year), 
+                   data = dat)
+ 
+ # View the summary of the model
+ summary(lmm_model)
+ 
+ 
+ # Perform pairwise comparisons for the Treatment factor
+ pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
+ 
+ # View the results of the pairwise comparisons
+ summary(pairwise_comparisons)
+ 
+ # To extract only the p-values of the pairwise comparisons:
+ pairwise_comparisons$contrasts
+ 
+ 
+ 
+ 
+ ### year in the model 
+ 
+ lmm_model <- lmer(yield_percent_uk ~ Treatment + year + (1 | block), 
+                   data = dat)
+ 
+ # View the summary of the model
+ summary(lmm_model)
+ 
+ 
+ # Perform pairwise comparisons for the Treatment factor
+ pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
+ 
+ # View the results of the pairwise comparisons
+ summary(pairwise_comparisons)
+ 
+ # To extract only the p-values of the pairwise comparisons:
+ pairwise_comparisons$contrasts
+ 
+ 
+ diagnostic_plots_lmm(model = lmm_model)
+ 
+
+ 
+
+ 
+ 
  
  
  ## 04 BARPLOT ####
@@ -181,7 +275,7 @@ y1 <- ggplot(data = yield_sum,
    theme_bw() +
    scale_fill_manual(values=c("turquoise3","tomato2"), 
                      name = "Treatment") +
-   theme(strip.text.x = element_text(size = 12, 
+   theme(strip.text.x = element_text(size = 10, 
                                      color = "black", 
                                      face = "bold.italic"), 
          legend.position = "bottom", 
@@ -266,6 +360,6 @@ y2
 
 ggarrange(y1, y2, ncol = 2, common.legend = TRUE, legend = "bottom")
 
-ggsave(filename = "plots/fig_yield_plot.png", width = 10.5, height = 6)
+ggsave(filename = "plots/fig_yield_plot.png", width = 10, height = 4)
 
 
