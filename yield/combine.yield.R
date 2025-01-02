@@ -131,7 +131,9 @@ library(emmeans)
  
  
  
- ### STATS ####
+ 
+ 
+ ## STATS ####
 
  # filter to Treatment 
  ca.dat <-  filter(dat, Treatment == "Conservation")
@@ -153,98 +155,69 @@ library(emmeans)
  source(file = "~/Documents/GitHub/phd_tools/fun_lmm_diagnostic_plots.R")
  
  colnames(dat)
- cols_to_analyse <- c(11,18,19,22)
+ cols_to_analyse <- c(11,19,22)
  check_gamma_distribution(data = dat, columns_to_check = cols_to_analyse)
  check_guassian(data = dat, columns_to_check = cols_to_analyse)
  
+ # Create a LaTeX table
+ norm_table <- gaussian_results %>%
+   kbl(format = "latex", 
+       booktabs = TRUE, 
+       caption = "gaussian_results", 
+       label = "gaussian_results_label", 
+       digits = 2) %>%
+   kable_styling(
+     latex_options = c("hold_position", "scale_down"), # Avoid 'tabu'
+     full_width = FALSE,                 # Set to FALSE for `tabular`
+     font_size = 10                     # Adjust font size for readability
+   ) %>%
+   row_spec(0, bold = TRUE)
  
- #### GLM ####
+ print(norm_table)
  
- # run glm with 
- glm <- glm(corrected_plot_t_ha ~ Treatment * crop, 
-            family = gaussian, 
-            data = dat)
-
  
- summary(glm) 
  
- # Perform pairwise comparisons
- pairwise_results <- emmeans(glm, pairwise ~ Treatment | crop)
  
- # View the pairwise comparison results
- summary(pairwise_results)
+ ## LMM Model ####
  
-
- diagnostic_plots_glm(glm)
- 
+ ## Yield per hectare ####
 
  # Fit a linear mixed-effects model (LMM)
- 
- lmm_model <- lmer(corrected_plot_t_ha ~ Treatment + (1 | year), 
+ lmm_model <- lmer(corrected_plot_t_ha ~ Treatment + (1 | block) + (1 | crop) + (1 | year), 
                    data = dat)
- 
  # View the summary of the model
  summary(lmm_model)
- 
- 
  # Perform pairwise comparisons for the Treatment factor
  pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
- 
  # View the results of the pairwise comparisons
  summary(pairwise_comparisons)
- 
- # To extract only the p-values of the pairwise comparisons:
- pairwise_comparisons$contrasts
- 
- 
- 
- ### pc yield UK ####
- 
- ### year as a random effect 
- 
- lmm_model <- lmer(yield_percent_uk ~ Treatment + (1 | year), 
-                   data = dat)
- 
- # View the summary of the model
- summary(lmm_model)
- 
- 
- # Perform pairwise comparisons for the Treatment factor
- pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
- 
- # View the results of the pairwise comparisons
- summary(pairwise_comparisons)
- 
- # To extract only the p-values of the pairwise comparisons:
- pairwise_comparisons$contrasts
- 
- 
- 
- 
- ### year in the model 
- 
- lmm_model <- lmer(yield_percent_uk ~ Treatment + year + (1 | block), 
-                   data = dat)
- 
- # View the summary of the model
- summary(lmm_model)
- 
- 
- # Perform pairwise comparisons for the Treatment factor
- pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
- 
- # View the results of the pairwise comparisons
- summary(pairwise_comparisons)
- 
- # To extract only the p-values of the pairwise comparisons:
- pairwise_comparisons$contrasts
  
  
  diagnostic_plots_lmm(model = lmm_model)
+ ggsave(filename = "stats/model_diagnostics/fig_diag_corrected_plot_t_ha.png", width = 12, height = 6)
  
+ 
+ 
+### yield - national average ####
+ 
+ # Fit a linear mixed-effects model (LMM)
+ lmm_model <- lmer(yield_percent_uk ~ Treatment + (1 | block) + (1 | crop) + (1 | year), 
+                   data = dat)
+ 
+ # View the summary of the model
+ summary(lmm_model)
+ # Perform pairwise comparisons for the Treatment factor
+ pairwise_comparisons <- emmeans(lmm_model, pairwise ~ Treatment)
+ 
+ # View the results of the pairwise comparisons
+ summary(pairwise_comparisons)
+
+  diagnostic_plots_lmm(model = lmm_model)
+  ggsave(filename = "stats/model_diagnostics/fig_diag_yield_average_uk.png", width = 12, height = 6) 
 
  
-
+ 
+ 
  
  
  

@@ -15,6 +15,8 @@ library(dplyr) # summary table
 library(ggpmisc)
 library(ggsignif) # significance on barplots
 library(readxl)
+library(lme4)
+library(emmeans)
 
 ## 01 DATA ####
 
@@ -82,6 +84,10 @@ dat$loss_pc <- (1 - (dat$plants_m2 / dat$seeds_m2)) * 100
 
 # Replace negative values with 0
 dat$loss_pc <- pmax(dat$loss_pc, 0)
+
+# Replace all zeros in the dataset with NA
+dat <- dat %>% mutate(across(everything(), ~ replace(., . == 0, NA)))
+
 
 dat <- dat %>%
   mutate(across(6:ncol(dat), as.numeric))
@@ -558,32 +564,13 @@ ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
 ### 04.1 normality ####
 
 source(file = "~/Documents/GitHub/phd_tools/fun_shapiro_wilks.R")
-
-check_normality(data = dat, columns_of_interest = c(6:8, 9:12, 17:18))
-
-outputDIR <- file.path("stats/")
-if (!dir.exists(outputDIR)) {dir.create(outputDIR)}
-
-write.csv(x = result_df, file = "stats/normality_stats.csv")
-
-# Create a LaTeX table
-norm_table <- result_df %>%
-  kbl(format = "latex", booktabs = TRUE, caption = "My Table", label = "MyLabel", digits = 2) %>%
-  kable_styling(
-    latex_options = c("hold_position", "scale_down"), # Avoid 'tabu'
-    full_width = FALSE,                 # Set to FALSE for `tabular`
-    font_size = 15                     # Adjust font size for readability
-  ) %>%
-  row_spec(0, bold = TRUE)
-
-print(norm_table)
-
-
+source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
+source(file = "~/Documents/GitHub/phd_tools/fun_lmm_diagnostic_plots.R")
+source(file = "~/Documents/GitHub/phd_tools/fun_glm_diagnostic_plots.R")
 
 
 
 ### 04.2 visualisation ####
-
 
 ### histograms ####
 
@@ -644,38 +631,109 @@ ggsave(filename = "plots/qq_plots.png")
 
 
 
+## TRANSFORMATIONS ####
+
+### Percentage data ####
+
+# Ensure the percentages are converted to proportions (0 to 1)
+dat$pc_reccomended_plants <- dat$pc_reccomended_plants / 100
+dat$loss_pc <- dat$loss_pc / 100
+
+# Apply Arcsine Square Root Transformation
+dat$pc_reccomended_plants_arcsine <- asin(sqrt(dat$pc_reccomended_plants))
+dat$loss_pc_arcsine <- asin(sqrt(dat$loss_pc))
+
+
+## left skewed data ####
+
+# Check for values <= 0 (as log transformation can't handle these)
+dat$plants_m2 <- ifelse(dat$plants_m2 <= 0, NA, dat$plants_m2)
+dat$shoots_m2 <- ifelse(dat$shoots_m2 <= 0, NA, dat$shoots_m2)
+dat$pods_ears_m2 <- ifelse(dat$pods_ears_m2 <= 0, NA, dat$pods_ears_m2)
+
+# Apply log transformation (log + 1 for values close to 0)
+dat$log_plants_m2 <- log(dat$plants_m2)
+dat$log_shoots_m2 <- log(dat$shoots_m2)
+dat$log_pods_ears_m2 <- log(dat$pods_ears_m2)
+
+
+selected_columns <- dat[, c(6:8, 9:12, 17:24)]
+# Apply function to all selected variables and store the plots
+plots <- lapply(names(selected_columns), plot_histogram)
+
+# Flatten the list of plots into a single list
+combined_plots <- do.call(c, plots)
+
+# Arrange all the plots in a grid layout
+ggarrange(plotlist = combined_plots, ncol = 3, nrow = 5)
 
 
 
-### 04.2 GLM ####
 
-source(file = "~/Documents/GitHub/phd_tools/fun_glm_by_year.R")
+
+## test distribution ####
+
+### SOURCE DISTRIB TESTS ####
+
+source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
 
 glimpse(dat)
-
 colnames(dat)
 
 
-### Count Data ####
+### POISSON ####
 
-run_glm_and_pairwise(data = dat, columns_to_run_glm = c(6:8, 9:12, 17:18)) # negative values do not run with quasi-poisson
-
-# Combine all tibbles in the list into one dataframe
-glm_summaries_df <- bind_rows(glm_summaries_list, .id = "response_variable")
-
-write.csv(x = glm_summaries_df, file = "stats/glm_summary_df.csv")
-
-
-# Combine all tibbles in the list into one dataframe
-pair_summaries_df <- bind_rows(pairwise_summaries_list, .id = "response_variable")
-
-write.csv(x = pair_summaries_df, file = "stats/pairwise_comp_df.csv")
+# Specify the columns to check (replace with your actual columns)
+columns_to_check <- c(6:24)  # Example column indices (plants_m2, shoots_m2, pods_ears_m2, etc.)
+# Run the Poisson test on selected columns
+poisson_results_multiple <- check_poisson_multiple(dat, columns_to_check)
+# Print the results
+print(poisson_results_multiple)
 
 
+### GUASSIAN DIST ####
+
+# # Example usage:
+columns_to_check <- c(6:24)  # Specify your columns of interest
+distribution_results <- check_guassian(dat, columns_to_check)
+print(distribution_results)
+
+### EXPONENTIAL DIST ####
+
+columns_to_check <- c(6:24)  # Specify the columns you want to check
+exponential_results <- check_exponential_distribution(dat, columns_to_check)
+print(exponential_results)
+
+### GAMMA DIST ####
+columns_to_check <- c(6:24)  # Specify the columns you want to check
+gamma_results <- check_gamma_distribution(dat, columns_to_check)
+print(gamma_results)
 
 
 
+## homoscedasticity ####
+# Define columns to check (for example, columns 6:19)
+columns_to_check <- colnames(dat)[6:19]
 
+# Apply the function with 'treatment' as the group column
+bartlett_results <- check_homogeneity_variance_bartlett(dat, columns_to_check, "treatment")
+
+# Print the results
+print(bartlett_results)
+
+
+
+### JOIN DF'S ####
+
+dist_stats_df <- cbind(poisson_results_multiple, 
+                       distribution_results[,2:ncol(distribution_results)],
+                       exponential_results[,2:ncol(exponential_results)],
+                       gamma_results[,2:ncol(gamma_results)],
+                       bartlett_results[,2:ncol(bartlett_results)])
+
+glimpse(dist_stats_df)
+
+write.csv(x = dist_stats_df, file = "stats/distrib_stats_crop_est.csv")
 
 
 
@@ -727,67 +785,113 @@ write(latex_code, file = "stats/overdispersion_stats.txt")
 
 
 
-## test distribution ####
 
-### SOURCE DISTRIB TESTS ####
+## 04.2 GLM ####
 
-source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
+### plants_m2 ####
 
-glimpse(dat)
+# Fit a GLMM with Gamma distribution (for positively skewed data)
+glmm_model <- glmer(plants_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                    family = Gamma(link = "log"), 
+                    data = dat)
 
-### POISSON ####
+# View summary
+summary(glmm_model)
 
-# Specify the columns to check (replace with your actual columns)
-columns_to_check <- c(6:19)  # Example column indices (plants_m2, shoots_m2, pods_ears_m2, etc.)
-# Run the Poisson test on selected columns
-poisson_results_multiple <- check_poisson_multiple(dat, columns_to_check)
-# Print the results
-print(poisson_results_multiple)
+# Run pairwise comparisons for the 'Treatment' factor
+pairwise_comparisons <- emmeans(glmm_model, pairwise ~ treatment)
 
+# View the results of pairwise comparisons
+summary(pairwise_comparisons)
 
-### GUASSIAN DIST ####
-
-# # Example usage:
-columns_to_check <- c(6:19)  # Specify your columns of interest
-distribution_results <- check_guassian(dat, columns_to_check)
-print(distribution_results)
-
-### EXPONENTIAL DIST ####
-
-columns_to_check <- c(6:19)  # Specify the columns you want to check
-exponential_results <- check_exponential_distribution(dat, columns_to_check)
-print(exponential_results)
-
-### GAMMA DIST ####
-columns_to_check <- c(6:19)  # Specify the columns you want to check
-gamma_results <- check_gamma_distribution(dat, columns_to_check)
-print(gamma_results)
+diagnostic_plots_glm(model = glmm_model)
 
 
 
-## homoscedasticity ####
-# Define columns to check (for example, columns 6:19)
-columns_to_check <- colnames(dat)[6:19]
+### shoots_m2 ####
 
-# Apply the function with 'treatment' as the group column
-bartlett_results <- check_homogeneity_variance_bartlett(dat, columns_to_check, "treatment")
+# Fit a GLMM with Gamma distribution (for positively skewed data)
+glmm_model <- glmer(shoots_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                    family = Gamma(link = "log"), 
+                    data = dat)
 
-# Print the results
-print(bartlett_results)
+# View summary
+summary(glmm_model)
+
+# Run pairwise comparisons for the 'Treatment' factor
+pairwise_comparisons <- emmeans(glmm_model, pairwise ~ treatment)
+
+# View the results of pairwise comparisons
+summary(pairwise_comparisons)
+
+diagnostic_plots_glm(model = glmm_model)
 
 
 
-### JOIN DF'S ####
+### pods_ears_m2 ####
 
-dist_stats_df <- cbind(poisson_results_multiple, 
-                       distribution_results[,2:ncol(distribution_results)],
-                       exponential_results[,2:ncol(exponential_results)],
-                       gamma_results[,2:ncol(gamma_results)],
-                       bartlett_results[,2:ncol(bartlett_results)])
+# Fit a GLMM with Gamma distribution (for positively skewed data)
+glmm_model <- glmer(pods_ears_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                    family = Gamma(link = "log"), 
+                    data = dat)
+# View summary
+summary(glmm_model)
+# Run pairwise comparisons for the 'Treatment' factor
+pairwise_comparisons <- emmeans(glmm_model, pairwise ~ treatment)
+# View the results of pairwise comparisons
+summary(pairwise_comparisons)
 
-glimpse(dist_stats_df)
+diagnostic_plots_glm(model = glmm_model)
 
-write.csv(x = dist_stats_df, file = "stats/distrib_stats_crop_est.csv")
+
+
+### biomass_dm_m2 ####
+
+# Fit a linear mixed-effects model (LMM)
+lmm_model <- lmer(biomass_dm_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                  data = dat)
+# View the summary of the model
+summary(lmm_model)
+# Perform pairwise comparisons for the Treatment factor
+pairwise_comparisons <- emmeans(lmm_model, pairwise ~ treatment)
+# View the results of the pairwise comparisons
+summary(pairwise_comparisons)
+
+
+
+### loss percentage ####
+
+# Fit a GLMM with Gamma distribution (for positively skewed data)
+glmm_model <- glmer(pc_reccomended_plants ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                    family = Gamma(link = "log"), 
+                    data = dat)
+# View summary
+summary(glmm_model)
+# Run pairwise comparisons for the 'Treatment' factor
+pairwise_comparisons <- emmeans(glmm_model, pairwise ~ treatment)
+# View the results of pairwise comparisons
+summary(pairwise_comparisons)
+
+diagnostic_plots_glm(model = glmm_model)
+
+
+
+
+### loss percentage ####
+
+# Fit a GLMM with Gamma distribution (for positively skewed data)
+glmm_model <- glmer(loss_pc ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+                    family = Gamma(link = "log"), 
+                    data = dat)
+# View summary
+summary(glmm_model)
+# Run pairwise comparisons for the 'Treatment' factor
+pairwise_comparisons <- emmeans(glmm_model, pairwise ~ treatment)
+# View the results of pairwise comparisons
+summary(pairwise_comparisons)
+
+diagnostic_plots_glm(model = glmm_model)
+
 
 
 
