@@ -13,12 +13,18 @@
 ## 05 Kriging
 ## 06 Load shp. files for comparison
 
-## 00 Setup ####
+
+
+
+#******************************************************************** ####
+# 00 Setup ####
 getwd()
-setwd(dir = "~/OneDrive - Harper Adams University/Data/agronomy/")
 
 
-## 01 Packages ####
+
+
+#******************************************************************** ####
+# 01 Packages ####
 suppressPackageStartupMessages({
   library(dplyr) # for "glimpse" and data manipulation
   library(ggplot2) # general plotting
@@ -51,10 +57,15 @@ suppressPackageStartupMessages({
 
 
 
-#********************************************************************
 
 
-## 02 Data ####
+
+
+
+#******************************************************************** ####
+# 02 Data ####
+
+
 
 ### Read CSV datasets ####
  
@@ -126,6 +137,8 @@ f_grid <- read.csv("kriging/data/grid_data/wgs_84_smaller_grid_points_clipped.cs
 
 
 
+
+#******************************************************************** ####
 # 01 PLOT SAMPLING POINT DATA ####
 
 setwd(dir = "~/OneDrive - Harper Adams University/Data/agronomy/")
@@ -285,7 +298,11 @@ glimpse(dat_wheat)
 
 
 
-## 02 Varigram fitting ####
+
+#******************************************************************** ####
+# Variogram fitting ####
+
+
 
 ## Beans ####
 
@@ -365,7 +382,12 @@ plot(vario, vario.fit$var_model, main = )
 
 
 
-## 06 Kriging ####
+
+
+#******************************************************************** ####
+# Kriging ####
+
+
 
 ### Beans ####
 
@@ -422,9 +444,15 @@ names(wheat_data)[names(wheat_data) == "var1.pred"] <- "Yield"
 
 
 
-## 07 PLOTS ####
 
-### Krige plots ####
+#******************************************************************** ####
+# PLOTS ####
+
+## Krige plots ####
+
+
+
+
 
 #### Beans ####
 
@@ -666,6 +694,13 @@ dev.off()
 
 
 
+
+
+
+
+
+
+#******************************************************************** ####
 # 08 TREATMENT COMPARISON ####
 
 coordinates(datCON_beans) <-
@@ -1106,10 +1141,14 @@ con_data_wheat$ca.value <- ca.value
 
 
 
-## PLOTS ####
 
 
-### BEANS ####
+
+#******************************************************************** ####
+# PLOTS ####
+
+
+## BEANS ####
 
 #open png for file save and define size and resolution
 png(paste("plots/", "beans_yield_diff_plot", ".png", sep=""),
@@ -1165,7 +1204,11 @@ b <- ggplot()+ geom_point(data = df.image, aes(y=Latitude, x=Longitude, color=Va
  
  
  
- ### WHEAT ####
+ 
+ 
+ 
+ 
+ ## WHEAT ####
  
  #open png for file save and define size and resolution
  png(paste("plots/", "wheat_yield_diff_plot", ".png", sep=""),
