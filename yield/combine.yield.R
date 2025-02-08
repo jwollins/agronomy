@@ -331,8 +331,12 @@ y2
 
 
 
-ggarrange(y1, y2, ncol = 2, common.legend = TRUE, legend = "bottom")
+ggarrange(y1, y2, 
+          ncol = 2, 
+          common.legend = TRUE, 
+          legend = "bottom", 
+          labels = c("A", "B"))
 
-ggsave(filename = "plots/fig_yield_plot.png", width = 10, height = 4)
+ggsave(filename = "plots/yield_plots/fig_yield_plot.png", width = 10, height = 4)
 
 

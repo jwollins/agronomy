@@ -94,7 +94,7 @@ ggplot(data = ap_cat_sum,
              ncol = 3, 
              scales = 'free_y')
 
-ggsave(filename = "ap_plot_all.png", width = 10, height = 6)
+ggsave(filename = "application_plots/ap_plot_all.png", width = 10, height = 4)
 
 
 
@@ -127,13 +127,38 @@ ggplot(data = fert_el_sum,
              ncol = 3, 
              scales = 'free_y')
 
-ggsave(filename = "fert_chem_elem_plot.png")
+ggsave(filename = "application_plots/fert_chem_elem_plot.png", width = 10, height = 6.5)
 
 
 
+ggplot(data = fert_el_sum, 
+       aes(x = year, 
+           y = Total_Active_Ingredient_kg_ha, 
+           group = treatment, 
+           fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge", 
+           colour = "black") + 
+  labs(
+    x = "Crop Type",
+    y = expression(Chemical~Element~(kg^{-1}))  ) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +
+  theme(
+    strip.text.x = element_text(size = 12, 
+                                color = "black", 
+                                face = "bold.italic"), 
+    legend.position = "bottom", 
+    axis.title.x = element_blank()
+  ) +
+  facet_wrap(~ chem_element, 
+             ncol = 4, 
+             scales = 'free_y')
 
 
 
+ggsave(filename = "application_plots/fert_chem_elem_plot2.png", width = 12, height = 6)
 
 
 
