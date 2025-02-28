@@ -345,6 +345,10 @@ ndvi_sum$Date <- as.Date(ndvi_sum$Date)
 
 ndvi_sum$treatment <- factor(ndvi_sum$treatment, levels = c("Conventional", "Conservation"))
 
+
+
+# ~ basic plot ####
+
 ggplot(data = ndvi_sum, 
        aes(y = mean, x = Date, color = treatment)) +
   geom_point(size = 1) +  # Add points for each observation
@@ -353,9 +357,9 @@ ggplot(data = ndvi_sum,
     alpha = 0.7) +  # Add lines to connect points by treatment
   geom_ribbon(
     aes(ymin = mean - se, ymax = mean + se, fill = treatment), 
-    alpha = 0.5, 
+    alpha = 0.3, 
     color = NA) +  # Add the error ribbon
-  theme_minimal() +  # Clean theme
+  theme_bw() +  # Clean theme
   labs(
     x = "Date",
     y = "Mean NDVI",
@@ -373,12 +377,89 @@ ggsave(filename = "agronomy/plots/fig_ndvi_plot.png", width = 8, height = 4)
 
 
 
+
+
+
+
+# ~ moving average plot ####
+
+library(zoo)
+
+ndvi_sum <- ndvi_sum %>%
+  arrange(treatment, Date) %>%  # Ensure data is sorted correctly
+  group_by(treatment) %>%
+  mutate(mean_smooth = rollmean(mean, k = 5, fill = NA, align = "center"))  # Moving average
+
+ggplot(ndvi_sum, aes(x = Date)) +
+  geom_line(aes(y = mean, color = "Raw NDVI"), size = 1, alpha = 0.5) +  # Raw data (faded)
+  geom_line(aes(y = mean_smooth, color = "Smoothed NDVI"), size = 1.2) +  # Smoothed data
+  facet_wrap(~ treatment) +
+  labs(y = "NDVI", x = "Date", title = "NDVI Trends with Moving Average") +
+  scale_color_manual(values = c("Raw NDVI" = "grey50", "Smoothed NDVI" = "blue")) +
+  theme_minimal()
+
+# ndvi_sum <- ndvi_sum %>%
+#   group_by(treatment) %>%
+#   mutate(mean_smooth = rollapply(mean, width = 5, FUN = median, fill = NA, align = "center"))
+
+library(zoo)
+ndvi_sum <- ndvi_sum %>%
+  arrange(treatment, Date) %>%  # Ensure data is sorted correctly
+  group_by(treatment) %>%
+  mutate(
+    mean_smooth = rollmean(mean, k = 5, fill = NA, align = "center"),
+    se_smooth = rollmean(se, k = 5, fill = NA, align = "center")  # Smooth the error too
+  )
+
+
+
+
+ggplot(data = ndvi_sum, 
+       aes(y = mean_smooth, x = Date, color = treatment)) +
+  geom_point(aes(y = mean), size = 1, alpha = 0.5) +  # Plot original points (faded)
+  geom_line(aes(group = treatment), alpha = 0.8, size = 1.2) +  # Smoothed line
+  geom_ribbon(
+    aes(ymin = mean_smooth - se_smooth, ymax = mean_smooth + se_smooth, fill = treatment), 
+    alpha = 0.3, 
+    color = NA) +  # Smoothed error ribbon
+  theme_bw() +  # Clean theme
+  labs(
+    x = "Date",
+    y = "Mean NDVI (Smoothed)",
+    color = "Treatment",
+    fill = "Treatment"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for clarity
+        legend.position = "bottom") +
+  scale_x_date(
+    breaks = date_breaks("8 weeks"),  # Adjust the frequency of x-axis ticks
+    labels = date_format("%m/%Y")  # Format the date labels
+  )
+
+
+ggsave(filename = "agronomy/plots/fig_ndvi_moving_mean_plot.png", width = 8, height = 4)
+
+
+
+
+
+
+
+
+
+
+
+
+
 shapiro.test(final_ndvi_df$Mean_NDVI)
 
 
 glm_model <- glm(formula = Mean_NDVI ~ treatment, data = final_ndvi_df)
 
 summary(glm_model)
+
+
+
 
 
 
@@ -396,6 +477,8 @@ dat2 <- dat2[,2:ncol(dat2)]
 dat <- rbind(dat1, dat2)
 
 glimpse(dat)
+
+
 
 # Plot histogram
 a <- ggplot(dat, aes(x = Mean_NDVI, fill = treatment)) +

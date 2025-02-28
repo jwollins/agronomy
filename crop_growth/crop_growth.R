@@ -5,9 +5,13 @@
 
 getwd()
 
-setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
+# setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
 
-## 00 packages ####
+
+
+
+#_____________________________________####
+# Packages ####
 
 library(ggplot2)
 library(ggpubr)
@@ -18,11 +22,28 @@ library(readxl)
 library(lme4)
 library(emmeans)
 
-## 01 DATA ####
 
-dat <- read_excel(path = "data/crop_growth/crop_data.xlsx")
+
+
+
+
+
+#_____________________________________####
+# DATA ####
+
+
+# ~ load raw data ####
+
+dat <- read_excel(path = "~/OneDrive - Harper Adams University/Data/agronomy/data/crop_growth/crop_data.xlsx")
+
+
+# ~ filter treatment ####
 
 dat <- filter(dat, treatment == "Conventional" | treatment == "Conservation")
+
+
+
+# ~ factors ####
 
 # Organise factors
 dat$plot <- as.factor(dat$plot)
@@ -30,13 +51,25 @@ dat$block <- as.factor(dat$block)
 dat$treatment <- as.factor(dat$treatment)
 dat$year <- as.factor(dat$year)
 
+
+
+
+
+# ~ target plants per m2 ####
+
 dat$target_plants_m2 <- 0
 dat$target_plants_m2 <- ifelse(test = dat$crop == "Spring Beans", yes = 50, no = dat$target_plants_m2)
 dat$target_plants_m2 <- ifelse(test = dat$crop == "Winter Wheat", yes = 260, no = dat$target_plants_m2)
 dat$target_plants_m2 <- ifelse(test = dat$crop == "Oilseed Rape", yes = 20, no = dat$target_plants_m2)
 dat$target_plants_m2 <- ifelse(test = dat$crop == "Spring Barley", yes = 300, no = dat$target_plants_m2)
 
-# drilling rates 
+
+
+
+
+# ~ drilling rates ####
+
+
 dat$drilling_rate_kg_ha <- 0
 dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Spring Beans" & dat$treatment == "Conventional",
                                   yes = 300, no = dat$drilling_rate_kg_ha)
@@ -55,7 +88,12 @@ dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Oilseed Rape" & dat$treatm
 dat$drilling_rate_kg_ha <- ifelse(test = dat$crop == "Spring Barley" & dat$treatment == "Conservation",
                                   yes = 200, no = dat$drilling_rate_kg_ha)
 
-# tgw
+
+
+
+# ~ tgw ####
+
+
 dat$tgw <- 0
 dat$tgw <- ifelse(test = dat$crop == "Spring Beans" & dat$treatment == "Conventional",
                                   yes = 550, no = dat$tgw)
@@ -76,9 +114,23 @@ dat$tgw <- ifelse(test = dat$crop == "Spring Barley" & dat$treatment == "Conserv
 
 
 
+# ~ seeds per m2 ####
+
 dat$seeds_m2 <- (dat$drilling_rate_kg_ha * 100) / dat$tgw
 
+
+
+
+
+# ~ recommended plant per m2 ####
+
 dat$pc_reccomended_plants <- (dat$plants_m2 / dat$target_plants_m2) * 100
+
+
+
+
+
+# ~ loss pc ####
 
 dat$loss_pc <- (1 - (dat$plants_m2 / dat$seeds_m2)) * 100
 
@@ -92,6 +144,11 @@ dat <- dat %>% mutate(across(everything(), ~ replace(., . == 0, NA)))
 dat <- dat %>%
   mutate(across(6:ncol(dat), as.numeric))
 
+
+
+
+# ~ harvest index ####
+
 dat$harvest_index <- (dat$grain_m2 / (dat$biomass_dm_m2 + dat$grain_m2)) * 100
 
 # View the result
@@ -99,7 +156,19 @@ glimpse(dat)
 
 
 
-## 02 SUMMARY STATS ####
+
+
+
+
+
+
+
+
+#_____________________________________####
+# SUMMARY STATS ####
+
+
+# ~ plants per m2 ####
 
 # Calculates mean, sd, se and IC - block
 plants_m2_sum <- dat %>%
@@ -112,12 +181,18 @@ plants_m2_sum <- dat %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
+
+
 # Change the order of 'treatment' using factor()
 plants_m2_sum <- plants_m2_sum %>%
   mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
          year = factor(year, levels = c("2022", "2023", "2024")),
          crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
 
+
+
+
+# ~ plants pc per m2 ####
 
 # Calculates mean, sd, se and IC - block
 plants_pc_m2_sum <- dat %>%
@@ -138,15 +213,21 @@ plants_pc_m2_sum <- plants_pc_m2_sum %>%
 
 
 
+
+# ~ loss pc ####
+
+glimpse(dat)
+
 loss_pc_sum <- dat %>%
   group_by(treatment, year, crop) %>%
-  summarise( 
-    n=n(),
-    mean=mean(loss_pc),
-    sd=sd(loss_pc)
+  summarise(
+    n = sum(!is.na(loss_pc)),  # Count of non-NA values
+    mean = mean(loss_pc, na.rm = TRUE),
+    sd = sd(loss_pc, na.rm = TRUE)
   ) %>%
-  mutate( se=sd/sqrt(n))  %>%
-  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+  mutate(se = sd / sqrt(n)) %>%
+  mutate(ic = se * qt((1 - 0.05) / 2 + .5, n - 1))
+
 
 # Change the order of 'treatment' using factor()
 loss_pc_sum <- loss_pc_sum %>%
@@ -154,6 +235,19 @@ loss_pc_sum <- loss_pc_sum %>%
          year = factor(year, levels = c("2022", "2023", "2024")),
          crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
 
+
+glimpse(loss_pc_sum)
+
+loss_pc_sum$mean <- ifelse(loss_pc_sum$treatment == "Conservation" & 
+                             loss_pc_sum$crop == "Oilseed Rape", yes = 100, no = loss_pc_sum$mean)
+
+
+# new_row <- as.data.frame(x = c("Conventional", "2024", "Spring Barley", "0", "0", "0", "0"))
+# 
+# test <- rbind(loss_pc_sum, new_row)
+
+
+# ~ shoots per m2 ####
 
 shoots_m2_sum <- dat %>%
   group_by(treatment, year) %>%
@@ -165,6 +259,10 @@ shoots_m2_sum <- dat %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
+
+
+# ~ ears per m2 ####
+
 ears_m2_sum <- dat %>%
   group_by(treatment, year) %>%
   summarise( 
@@ -174,6 +272,11 @@ ears_m2_sum <- dat %>%
   ) %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+
+
+# ~ biomass dm per m2 ####
 
 biomass_dm_m2_sum <- dat %>%
   group_by(treatment, year) %>%
@@ -186,6 +289,9 @@ biomass_dm_m2_sum <- dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
+
+# ~ height per m2 ####
+
 height_sum <- dat %>%
   group_by(treatment, year) %>%
   summarise( 
@@ -195,6 +301,10 @@ height_sum <- dat %>%
   ) %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+
+# ~ harvest index ####
 
 harvest_index_sum <- dat %>%
   group_by(treatment, year) %>%
@@ -209,9 +319,18 @@ harvest_index_sum <- dat %>%
 
 
 
-## 03 PLOTS ####
 
-### PLANTS M2 PLOT ####
+
+
+
+
+
+#_____________________________________####
+# PLOTS ####
+
+
+
+# ~ PLANTS M2 PLOT ####
 
 title_exp <- expression(Plants~(M^{2}))  # this is the legend title with correct notation
 
@@ -223,7 +342,8 @@ c1 <- ggplot(data = plants_m2_sum,
                  fill = treatment)) + 
   geom_bar(stat = "identity", 
            color = "black", 
-           position = "dodge") + 
+           position = position_dodge(width = 0.9), 
+           width = 0.9) +  
   labs(
     x = "Treatment",
     y = y_title,
@@ -242,14 +362,12 @@ c1 <- ggplot(data = plants_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_wrap(~ crop, 
-             ncol = 4, 
-             scales = 'free_x') 
+  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
 
 c1
 
 
-### percentage establishment plot ####
+# ~ percentage establishment plot ####
 
 title_exp <- expression(Plants~(M^{2}))  # this is the legend title with correct notation
 
@@ -261,11 +379,12 @@ c2 <- ggplot(data = plants_pc_m2_sum,
                  fill = treatment)) + 
   geom_bar(stat = "identity", 
            color = "black", 
-           position = "dodge") + 
+           position = position_dodge(width = 0.9), 
+           width = 0.9) +  
   labs(
     x = "Treatment",
     y = "Target plant population (%)",
-    subtitle = "Percentage achieved of reccomended plant population (%)", 
+    subtitle = "Reccomended plant population (%)", 
     caption = "") +
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -280,9 +399,7 @@ c2 <- ggplot(data = plants_pc_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_wrap(~ crop, 
-             ncol = 4, 
-             scales = 'free_x') 
+  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
 
 c2
 
@@ -309,7 +426,10 @@ c2
 # ) 
 
 
-### percentage losses ####
+
+
+
+# ~ percentage losses ####
 
 title_exp <- expression(Losses~("%")~(M^{2}))  # this is the legend title with correct notation
 
@@ -322,14 +442,15 @@ c3 <- ggplot(data = loss_pc_sum,
                  fill = treatment)) + 
   geom_bar(stat = "identity", 
            color = "black", 
-           position = "dodge") + 
+           position = position_dodge(width = 0.9), 
+           width = 0.9) +  
   labs(
     x = "Treatment",
     y = "Losses (%)",
-    subtitle = "Percentage of losses from seed planted (%)", 
+    subtitle = "Losses from seed planted (%)", 
     caption = "") +
   theme_bw() +
-  scale_fill_manual(values=c("turquoise3","tomato2"), 
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
                     name = "Treatment") +
   theme(strip.text.x = element_text(size = 8, 
                                     color = "black", 
@@ -339,25 +460,27 @@ c3 <- ggplot(data = loss_pc_sum,
         axis.title.x = element_blank()) +
   geom_errorbar(aes(ymin = mean - se, 
                     ymax = mean + se),
-                width=.2,                    # Width of the error bars
-                position=position_dodge(.9)) +
-  facet_wrap(~ crop, 
-             ncol = 4, 
-             scales = 'free_x') 
+                width = 0.2,                  
+                position = position_dodge(0.9)) + 
+  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
+
 
 c3
 
 
 ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "bottom")
 
-ggsave(filename = "plots/fig_plant_est_plot.png", width = 14, height = 6)
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/crop_establishment/fig_plant_est_plot.png", 
+       width = 11.2, height = 4)
 
 
 
 
 
 
-### biomass dm m2 ####
+
+
+# ~ biomass dm m2 ####
 
 title_exp <- expression(Biomass~dry~matter~(g~M^{2}))  # this is the legend title with correct notation
 
@@ -396,7 +519,11 @@ c4
 
 
 
-### crop height ####
+
+
+
+
+# ~ crop height ####
 
 title_exp <- expression(Crop~heightr~(cm))  # this is the legend title with correct notation
 
@@ -436,7 +563,11 @@ c5
 
 
 
-### ears / pods m2 ####
+
+
+
+
+# ~ ears / pods m2 ####
 
 title_exp <- expression(Ears/pods~(M^{-1}))  # this is the legend title with correct notation
 
@@ -474,7 +605,12 @@ c6 <- ggplot(data = ears_m2_sum,
 c6
 
 
-### shoots m2 ####
+
+
+
+
+
+# ~ shoots m2 ####
 
 title_exp <- expression(Shoots~(M^{-1}))  # this is the legend title with correct notation
 
@@ -513,7 +649,10 @@ c7
 
 
 
-### harvest index ####
+
+
+
+# ~ harvest index ####
 
 title_exp <- expression(havrest~index)  # this is the legend title with correct notation
 
@@ -559,9 +698,19 @@ ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
 
 
 
-## 04 STATS ####
 
-### 04.1 normality ####
+
+
+
+
+
+#_____________________________________####
+# STATS ####
+
+
+
+# ~ functions ####
+
 
 source(file = "~/Documents/GitHub/phd_tools/fun_shapiro_wilks.R")
 source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
@@ -570,9 +719,16 @@ source(file = "~/Documents/GitHub/phd_tools/fun_glm_diagnostic_plots.R")
 
 
 
-### 04.2 visualisation ####
 
-### histograms ####
+
+
+
+# ~ visualisation ####
+
+
+
+
+# ~ histograms ####
 
 selected_columns <- dat[, c(6:8, 9:12, 17:18)]
 
@@ -606,7 +762,10 @@ ggsave(filename = "plots/histograms.png")
 
 
 
-### qqplots ####
+
+
+
+# ~ qqplots ####
 
 # Function to plot histogram and QQ plot for a single variable
 plot_qq <- function(var) {
@@ -631,9 +790,18 @@ ggsave(filename = "plots/qq_plots.png")
 
 
 
-## TRANSFORMATIONS ####
 
-### Percentage data ####
+
+
+
+
+#_____________________________________####
+# TRANSFORMATIONS ####
+
+
+
+
+# ~ Percentage data ####
 
 # Ensure the percentages are converted to proportions (0 to 1)
 dat$pc_reccomended_plants <- dat$pc_reccomended_plants / 100
@@ -644,7 +812,10 @@ dat$pc_reccomended_plants_arcsine <- asin(sqrt(dat$pc_reccomended_plants))
 dat$loss_pc_arcsine <- asin(sqrt(dat$loss_pc))
 
 
-## left skewed data ####
+
+
+
+# ~ left skewed data ####
 
 # Check for values <= 0 (as log transformation can't handle these)
 dat$plants_m2 <- ifelse(dat$plants_m2 <= 0, NA, dat$plants_m2)
@@ -671,9 +842,12 @@ ggarrange(plotlist = combined_plots, ncol = 3, nrow = 5)
 
 
 
-## test distribution ####
 
-### SOURCE DISTRIB TESTS ####
+
+
+# ~ test distribution ####
+
+# ~~ SOURCE DISTRIB TESTS ####
 
 source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
 
@@ -681,7 +855,7 @@ glimpse(dat)
 colnames(dat)
 
 
-### POISSON ####
+# ~~ POISSON ####
 
 # Specify the columns to check (replace with your actual columns)
 columns_to_check <- c(6:24)  # Example column indices (plants_m2, shoots_m2, pods_ears_m2, etc.)
@@ -691,27 +865,38 @@ poisson_results_multiple <- check_poisson_multiple(dat, columns_to_check)
 print(poisson_results_multiple)
 
 
-### GUASSIAN DIST ####
+
+
+# ~~ GUASSIAN DIST ####
 
 # # Example usage:
 columns_to_check <- c(6:24)  # Specify your columns of interest
 distribution_results <- check_guassian(dat, columns_to_check)
 print(distribution_results)
 
-### EXPONENTIAL DIST ####
+
+
+
+# ~~ EXPONENTIAL DIST ####
 
 columns_to_check <- c(6:24)  # Specify the columns you want to check
 exponential_results <- check_exponential_distribution(dat, columns_to_check)
 print(exponential_results)
 
-### GAMMA DIST ####
+
+
+
+# ~~ GAMMA DIST ####
+
 columns_to_check <- c(6:24)  # Specify the columns you want to check
 gamma_results <- check_gamma_distribution(dat, columns_to_check)
 print(gamma_results)
 
 
 
-## homoscedasticity ####
+
+# ~~ homoscedasticity ####
+
 # Define columns to check (for example, columns 6:19)
 columns_to_check <- colnames(dat)[6:19]
 
@@ -723,7 +908,9 @@ print(bartlett_results)
 
 
 
-### JOIN DF'S ####
+
+
+# ~ JOIN DF'S ####
 
 dist_stats_df <- cbind(poisson_results_multiple, 
                        distribution_results[,2:ncol(distribution_results)],
@@ -739,7 +926,9 @@ write.csv(x = dist_stats_df, file = "stats/distrib_stats_crop_est.csv")
 
 
 
-## overdispersion test ####
+
+
+# ~ overdispersion test ####
 
 source(file = "~/Documents/GitHub/phd_tools/fun_overdispersion_test.R")
 
@@ -786,9 +975,15 @@ write(latex_code, file = "stats/overdispersion_stats.txt")
 
 
 
-## 04.2 GLM ####
 
-### plants_m2 ####
+
+
+
+
+#_____________________________________####
+# GLM ####
+
+# ~ plants_m2 ####
 
 # Fit a GLMM with Gamma distribution (for positively skewed data)
 glmm_model <- glmer(plants_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
@@ -808,7 +1003,7 @@ diagnostic_plots_glm(model = glmm_model)
 
 
 
-### shoots_m2 ####
+# ~ shoots_m2 ####
 
 # Fit a GLMM with Gamma distribution (for positively skewed data)
 glmm_model <- glmer(shoots_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
@@ -828,7 +1023,9 @@ diagnostic_plots_glm(model = glmm_model)
 
 
 
-### pods_ears_m2 ####
+
+
+# ~ pods_ears_m2 ####
 
 # Fit a GLMM with Gamma distribution (for positively skewed data)
 glmm_model <- glmer(pods_ears_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
@@ -845,7 +1042,9 @@ diagnostic_plots_glm(model = glmm_model)
 
 
 
-### biomass_dm_m2 ####
+
+
+# ~ biomass_dm_m2 ####
 
 # Fit a linear mixed-effects model (LMM)
 lmm_model <- lmer(biomass_dm_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
@@ -859,7 +1058,10 @@ summary(pairwise_comparisons)
 
 
 
-### loss percentage ####
+
+
+
+# ~ loss percentage ####
 
 # Fit a GLMM with Gamma distribution (for positively skewed data)
 glmm_model <- glmer(pc_reccomended_plants ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
@@ -877,7 +1079,9 @@ diagnostic_plots_glm(model = glmm_model)
 
 
 
-### loss percentage ####
+
+
+# ~ loss percentage ####
 
 # Fit a GLMM with Gamma distribution (for positively skewed data)
 glmm_model <- glmer(loss_pc ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
