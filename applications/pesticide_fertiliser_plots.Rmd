@@ -1,0 +1,324 @@
+---
+title: "application_plots"
+author: "Joe Collins"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+  library(dplyr) # for "glimpse" and data manipulation
+  library(ggplot2) # general plotting
+  library(ggpubr) # custom plotting
+  library(gridExtra) # grid plotting
+  library(readxl) # read .xlsx files
+  library(readr) # read .txt files
+  library(plotrix) # standard error
+
+```
+
+# Data 
+
+
+
+```{r data}
+
+# ~ read data ####
+dat <- read.csv(file = "sym_link_agronomy_data/data/applications_data/normalised_spray_fert_data.csv")
+
+
+# ~ set factors ####
+
+dat$treatment <- as.factor(dat$treatment)
+dat$year <- as.factor(dat$year)
+dat$category <- as.factor(dat$category)
+
+
+
+
+# ~ filter the data ####
+
+spray_dat <- filter(.data = dat, activity == "Application" & category != "Fertiliser")
+
+fert_dat <- filter(.data = dat, activity == "Application" & category == "Fertiliser")
+
+
+
+# Filter out rows where 'category' is 'Fertiliser'
+fert_dat <- fert_dat %>%
+  filter(chem_element != "NA")
+
+# set the factor levels
+fert_dat$chem_element <- factor(fert_dat$chem_element, levels = c("N","P", "K", "S", "Ca", "Mg", "B", "Cu", "Mn", "Mo", "Zn"))
+
+
+
+
+# ~ expand the df to all combo's
+
+# Create a dataframe with all possible combinations
+spray_full_df <- expand.grid(
+  treatment = unique(spray_dat$treatment),
+  year = unique(spray_dat$year),
+  category = unique(spray_dat$category)
+)
+
+
+# Create a dataframe with all possible combinations
+fert_full_df <- expand.grid(
+  treatment = unique(fert_dat$treatment),
+  year = unique(fert_dat$year),
+  chem_element = unique(fert_dat$chem_element)
+)
+
+```
+
+
+
+
+# Pesticicde sum plots 
+
+
+```{r pesticide sum plot, echo=FALSE}
+
+# Group by 'treatment' and 'crop' and calculate the sum of 'normalized_rate_kg_ha'
+summary_spray_dat_yt <- spray_dat %>%
+  group_by(treatment, year, category) %>%
+  summarise(Total_Active_Ingredient_kg_ha = sum(normalized_rate_kg_ha, na.rm = TRUE), .groups = 'drop')
+
+# Merge with existing data, filling missing values with 0
+summary_spray_dat_yt <- spray_full_df %>%
+  left_join(summary_spray_dat_yt, by = c("treatment", "year", "category")) %>%
+  mutate(Total_Active_Ingredient_kg_ha = ifelse(is.na(Total_Active_Ingredient_kg_ha), 0, Total_Active_Ingredient_kg_ha))
+
+
+yt <- 
+ggplot(data = summary_spray_dat_yt, 
+       aes(x = year, 
+           y = Total_Active_Ingredient_kg_ha, 
+           group = treatment, 
+           fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9), 
+           width = 0.9) +  
+  labs(
+    x = "Crop Type",
+    y = expression(Total~Active~Ingredient~(kg^{-1}))  
+    ) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +
+  theme(
+    strip.text.x = element_text(size = 12, 
+                                color = "black", 
+                                face = "bold.italic"), 
+    legend.position = "bottom", 
+    axis.title.x = element_blank()
+  ) +
+  facet_wrap(~ category, 
+             ncol = 3, 
+             scales = 'free_y') 
+
+yt
+
+
+```
+```{r save pesticide plot}
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/ap_plot_all.png",
+       width = 10, height = 5)
+
+```
+
+
+
+# pesticide mean plot 
+
+
+```{r pesticide plot mean}
+
+sum <- 
+   spray_dat %>%
+  group_by(treatment, year, category) %>%
+  summarise(
+    n = n(),
+    sum = round(x = sum(normalized_rate_kg_ha, na.rm = TRUE), digits = 2)
+  ) %>% 
+  group_by(treatment,category) %>%
+  summarise(
+    n = n(),
+    # sum = round(sum(total_pli_x_rate, na.rm = TRUE), 2),
+    mean = round(mean(sum, na.rm = TRUE), 2),
+    sd = round(sd(sum, na.rm = TRUE), 2),
+    se = round(sd(sum, na.rm = TRUE) / sqrt(n), 2) # Standard Error
+  )
+  
+sum
+
+
+t1 <-
+ggplot(data = sum, 
+            aes(x = treatment, 
+                y = mean, 
+                fill = treatment)) +
+geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = expression(Total~Active~Ingredient~(kg^{-1})) ) +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+      geom_errorbar(aes(ymin=mean-se,
+                        ymax=mean+se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  facet_wrap(~ category, 
+             ncol = 6, 
+             scales = 'free_y') 
+
+t1
+
+
+
+```
+
+
+```{r save pesticide sum plot}
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/pesticide_mean_plot.png",
+       width = 10, height = 3.5)
+
+```
+
+
+
+
+# ~ Fertiliser sum plots 
+
+
+```{r fert plot sum, echo=FALSE}
+
+# Group by 'treatment' and 'crop' and calculate the sum of the chemical element
+summary_fert_dat_yt <- fert_dat %>%
+  group_by(treatment, year, chem_element) %>%
+  summarise(Total_Chem_Element_kg_ha = sum(normalized_rate_kg_ha, na.rm = TRUE), .groups = 'drop')
+
+# Merge with existing data, filling missing values with 0
+summary_fert_dat_yt <- fert_full_df %>%
+  left_join(summary_fert_dat_yt, by = c("treatment", "year", "chem_element")) %>%
+  mutate(Total_Chem_Element_kg_ha = ifelse(is.na(Total_Chem_Element_kg_ha), 0, Total_Chem_Element_kg_ha))
+
+
+yt <- 
+ggplot(data = summary_fert_dat_yt, 
+       aes(x = year, 
+           y = Total_Chem_Element_kg_ha, 
+           group = treatment, 
+           fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9), 
+           width = 0.9) +  
+  labs(
+    x = "Crop Type",
+    y = expression(Chemical~Element~(kg^{-1}))  
+    ) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +
+  theme(
+    strip.text.x = element_text(size = 12, 
+                                color = "black", 
+                                face = "bold.italic"), 
+    legend.position = "bottom", 
+    axis.title.x = element_blank()
+  ) +
+  facet_wrap(~ chem_element, 
+             ncol = 3, 
+             scales = 'free_y') 
+
+yt
+
+
+```
+
+```{r save fert plot}
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_chem_elem_plot.png",
+       width = 10, height = 8.5)
+
+```
+
+
+
+
+```{r fert plot mean}
+
+sum <- 
+   fert_dat %>%
+  group_by(treatment, year, chem_element) %>%
+  summarise(
+    n = n(),
+    sum = sum(normalized_rate_kg_ha, na.rm = TRUE)
+  ) %>% 
+  group_by(treatment,chem_element) %>%
+  summarise(
+    n = n(),
+    # sum = round(sum(total_pli_x_rate, na.rm = TRUE), 2),
+    mean = round(mean(sum, na.rm = TRUE), 5),
+    sd = round(sd(sum, na.rm = TRUE), 5),
+    se = round(sd(sum, na.rm = TRUE) / sqrt(n), 5) # Standard Error
+  )
+  
+sum
+
+
+t1 <-
+ggplot(data = sum, 
+            aes(x = treatment, 
+                y = mean, 
+                fill = treatment)) +
+geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  labs(
+    x = "Treatment",
+    y = expression(Chemical~Element~(kg^{-1})) ) +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+      geom_errorbar(aes(ymin=mean-se,
+                        ymax=mean+se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  facet_wrap(~ chem_element, 
+             ncol = 6, 
+             scales = 'free_y') 
+
+t1
+
+
+
+```
+```{r save fert mean plot}
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_mean_chem_elem_plot.png",
+       width = 10, height = 6)
+
+```
