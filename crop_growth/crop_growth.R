@@ -468,7 +468,11 @@ c3 <- ggplot(data = loss_pc_sum,
 c3
 
 
-ggarrange(c1, c2, c3, ncol = 3, common.legend = TRUE, legend = "bottom")
+ggarrange(c1, c2, c3, 
+          ncol = 3, 
+          common.legend = TRUE, 
+          legend = "bottom",
+          labels = c("A","B","C"))
 
 ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/crop_establishment/fig_plant_est_plot.png", 
        width = 11.2, height = 4)
@@ -691,9 +695,23 @@ c8
 
 
 
-ggarrange(c4, c5, c6, c7, c8, ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+ggarrange(c4, c5, c6, c7, c8, 
+          ncol = 3, 
+          nrow = 2, 
+          common.legend = TRUE, 
+          legend = "bottom")
 
-ggsave(filename = "plots/fig_crop_growth_plot.png", width = 14, height = 6)
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/crop_establishment/fig_crop_growth_plot.png", 
+       width = 14, height = 6)
+
+ggarrange(c4, c6, c7, 
+          ncol = 3, 
+          nrow = 1, 
+          common.legend = TRUE, 
+          legend = "bottom", labels = c("A","B","C"))
+
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/crop_establishment/fig_crop_growth_plot_2.png", 
+       width = 10, height = 3.5)
 
 
 
@@ -932,6 +950,7 @@ write.csv(x = dist_stats_df, file = "stats/distrib_stats_crop_est.csv")
 
 source(file = "~/Documents/GitHub/phd_tools/fun_overdispersion_test.R")
 
+
 colnames(dat)
 
 # Specify column numbers to test for overdispersion
@@ -983,10 +1002,22 @@ write(latex_code, file = "stats/overdispersion_stats.txt")
 #_____________________________________####
 # GLM ####
 
+source(file = "~/Documents/GitHub/phd_tools/fun_distribution_plots.R")
+
+source(file = "~/Documents/GitHub/phd_tools/fun_glm_diagnostic_plots.R")
+
+
 # ~ plants_m2 ####
 
+distribution_plots(data = dat, 
+                   variable = log(dat$plants_m2), 
+                   colour = dat$treatment)
+
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/distributions/dist_plants_m2.png",
+       width = 10, height = 2.25)
+
 # Fit a GLMM with Gamma distribution (for positively skewed data)
-glmm_model <- glmer(plants_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+glmm_model <- glmer(plants_m2 ~ treatment + (1 | block) + (1 | crop), 
                     family = Gamma(link = "log"), 
                     data = dat)
 
@@ -1001,12 +1032,26 @@ summary(pairwise_comparisons)
 
 diagnostic_plots_glm(model = glmm_model)
 
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/stats/model_diagnostics/model_diag_plants_m2.png", 
+       width = 10, height = 3.5)
+
+
+
+
+
 
 
 # ~ shoots_m2 ####
 
+distribution_plots(data = dat, 
+                   variable = dat$shoots_m2, 
+                   colour = dat$treatment)
+
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/distributions/dist_plants_m2.png",
+       width = 10, height = 2.25)
+
 # Fit a GLMM with Gamma distribution (for positively skewed data)
-glmm_model <- glmer(shoots_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
+glmm_model <- glmer(shoots_m2 ~ treatment + (1 | block) + (1 | crop), 
                     family = Gamma(link = "log"), 
                     data = dat)
 
@@ -1045,6 +1090,13 @@ diagnostic_plots_glm(model = glmm_model)
 
 
 # ~ biomass_dm_m2 ####
+
+distribution_plots(data = dat, 
+                   variable = dat$biomass_dm_m2, 
+                   colour = dat$treatment)
+
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/distributions/dist_biomass_dm_m2.png",
+       width = 10, height = 2.25)
 
 # Fit a linear mixed-effects model (LMM)
 lmm_model <- lmer(biomass_dm_m2 ~ treatment + (1 | block) + (1 | crop) + (1 | year), 
