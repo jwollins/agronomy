@@ -7,6 +7,8 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rstudioapi::getActiveProject())
+
 
   library(dplyr) # for "glimpse" and data manipulation
   library(ggplot2) # general plotting
@@ -23,6 +25,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r data}
+
+getwd()
 
 # ~ read data ####
 dat <- read.csv(file = "sym_link_agronomy_data/data/applications_data/normalised_spray_fert_data.csv")
@@ -144,15 +148,16 @@ sum <-
   group_by(treatment, year, category) %>%
   summarise(
     n = n(),
-    sum = round(x = sum(normalized_rate_kg_ha, na.rm = TRUE), digits = 2)
+    sum1 = round(x = sum(normalized_rate_kg_ha, na.rm = TRUE), digits = 2)
   ) %>% 
   group_by(treatment,category) %>%
   summarise(
     n = n(),
     # sum = round(sum(total_pli_x_rate, na.rm = TRUE), 2),
-    mean = round(mean(sum, na.rm = TRUE), 2),
-    sd = round(sd(sum, na.rm = TRUE), 2),
-    se = round(sd(sum, na.rm = TRUE) / sqrt(n), 2) # Standard Error
+    mean = mean(sum1, na.rm = TRUE),
+    sum2 = sum(sum1),
+    sd = sd(sum1, na.rm = TRUE),
+    se = sd(sum1, na.rm = TRUE) / sqrt(n) # Standard Error
   )
   
 sum
@@ -161,7 +166,7 @@ sum
 t1 <-
 ggplot(data = sum, 
             aes(x = treatment, 
-                y = mean, 
+                y = sum2, 
                 fill = treatment)) +
 geom_bar(stat = "identity", 
            color = "black", 
@@ -172,10 +177,10 @@ geom_bar(stat = "identity",
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
                     name = "Treatment") +
-      geom_errorbar(aes(ymin=mean-se,
-                        ymax=mean+se),
-                    width=.2,                    # Width of the error bars
-                    position=position_dodge(.9)) +
+      # geom_errorbar(aes(ymin=mean-se,
+      #                   ymax=mean+se),
+      #               width=.2,                    # Width of the error bars
+      #               position=position_dodge(.9)) +
   theme(strip.text.x = element_text(size = 12, 
                                     color = "black", 
                                     face = "bold.italic"), 
@@ -195,7 +200,7 @@ t1
 
 ```{r save pesticide sum plot}
 
-ggsave(filename = "sym_link_agronomy_data/plots/application_plots/pesticide_mean_plot.png",
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/pesticide_sum_plot.png",
        width = 10, height = 3.5)
 
 ```
@@ -269,15 +274,16 @@ sum <-
   group_by(treatment, year, chem_element) %>%
   summarise(
     n = n(),
-    sum = sum(normalized_rate_kg_ha, na.rm = TRUE)
+    sum1 = sum(normalized_rate_kg_ha, na.rm = TRUE)
   ) %>% 
   group_by(treatment,chem_element) %>%
   summarise(
     n = n(),
     # sum = round(sum(total_pli_x_rate, na.rm = TRUE), 2),
-    mean = round(mean(sum, na.rm = TRUE), 5),
-    sd = round(sd(sum, na.rm = TRUE), 5),
-    se = round(sd(sum, na.rm = TRUE) / sqrt(n), 5) # Standard Error
+    mean = mean(sum1, na.rm = TRUE),
+    sum2 = sum(sum1),
+    sd = sd(sum1, na.rm = TRUE),
+    se = sd(sum1, na.rm = TRUE) / sqrt(n) # Standard Error
   )
   
 sum
@@ -286,7 +292,7 @@ sum
 t1 <-
 ggplot(data = sum, 
             aes(x = treatment, 
-                y = mean, 
+                y = sum2, 
                 fill = treatment)) +
 geom_bar(stat = "identity", 
            color = "black", 
@@ -297,10 +303,10 @@ geom_bar(stat = "identity",
   theme_bw() +
   scale_fill_manual(values=c("turquoise3","tomato2"), 
                     name = "Treatment") +
-      geom_errorbar(aes(ymin=mean-se,
-                        ymax=mean+se),
-                    width=.2,                    # Width of the error bars
-                    position=position_dodge(.9)) +
+      # geom_errorbar(aes(ymin=mean-se,
+      #                   ymax=mean+se),
+      #               width=.2,                    # Width of the error bars
+      #               position=position_dodge(.9)) +
   theme(strip.text.x = element_text(size = 12, 
                                     color = "black", 
                                     face = "bold.italic"), 
@@ -318,7 +324,7 @@ t1
 ```
 ```{r save fert mean plot}
 
-ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_mean_chem_elem_plot.png",
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_sum_chem_elem_plot.png",
        width = 10, height = 6)
 
 ```
