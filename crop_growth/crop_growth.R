@@ -3,9 +3,9 @@
 ## what: crop growth
 ## when: 2024-10-15
 
-getwd()
+setwd(rstudioapi::getActiveProject())
 
-# setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
+getwd()
 
 
 
@@ -159,6 +159,12 @@ glimpse(dat)
 
 
 
+#_____________________________________####
+# Save the processed data ####
+
+
+write.csv(x = dat, 
+          file = "sym_link_agronomy_data/data/crop_growth/processed_crop_data.csv")
 
 
 
@@ -175,8 +181,8 @@ plants_m2_sum <- dat %>%
   group_by(treatment, year, crop) %>%
   summarise( 
     n=n(),
-    mean=mean(plants_m2),
-    sd=sd(plants_m2)
+    mean=mean(plants_m2, na.rm = TRUE),
+    sd=sd(plants_m2, na.rm = TRUE)
   ) %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
@@ -253,8 +259,8 @@ shoots_m2_sum <- dat %>%
   group_by(treatment, year) %>%
   summarise( 
     n=n(),
-    mean=mean(shoots_m2),
-    sd=sd(shoots_m2)
+    mean=mean(shoots_m2, na.rm = TRUE),
+    sd=sd(shoots_m2, na.rm = TRUE)
   ) %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
@@ -344,6 +350,7 @@ c1 <- ggplot(data = plants_m2_sum,
            color = "black", 
            position = position_dodge(width = 0.9), 
            width = 0.9) +  
+  geom_text(aes(label = crop), vjust = -2, angle = 0, size = 3) +
   labs(
     x = "Treatment",
     y = y_title,
@@ -362,16 +369,14 @@ c1 <- ggplot(data = plants_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
+  facet_grid(. ~ year)  # Ensures equal width for all facet columns
 
 c1
 
 
 # ~ percentage establishment plot ####
 
-title_exp <- expression(Plants~(M^{2}))  # this is the legend title with correct notation
 
-y_title <- expression(Plants~(M^{2}))
 
 c2 <- ggplot(data = plants_pc_m2_sum, 
              aes(x = treatment, 
@@ -381,6 +386,7 @@ c2 <- ggplot(data = plants_pc_m2_sum,
            color = "black", 
            position = position_dodge(width = 0.9), 
            width = 0.9) +  
+  geom_text(aes(label = crop), vjust = -2, angle = 0, size = 3) +
   labs(
     x = "Treatment",
     y = "Target plant population (%)",
@@ -399,7 +405,7 @@ c2 <- ggplot(data = plants_pc_m2_sum,
                     ymax = mean + se),
                 width=.2,                    # Width of the error bars
                 position=position_dodge(.9)) +
-  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
+  facet_grid(. ~ year)  # Ensures equal width for all facet columns
 
 c2
 
@@ -444,6 +450,7 @@ c3 <- ggplot(data = loss_pc_sum,
            color = "black", 
            position = position_dodge(width = 0.9), 
            width = 0.9) +  
+  geom_text(aes(label = crop), vjust = -2, angle = 0, size = 3) +
   labs(
     x = "Treatment",
     y = "Losses (%)",
@@ -462,8 +469,7 @@ c3 <- ggplot(data = loss_pc_sum,
                     ymax = mean + se),
                 width = 0.2,                  
                 position = position_dodge(0.9)) + 
-  facet_grid(. ~ crop)  # Ensures equal width for all facet columns
-
+  facet_grid(. ~ year + crop)  # Ensures equal width for all facet columns
 
 c3
 
@@ -734,75 +740,6 @@ source(file = "~/Documents/GitHub/phd_tools/fun_shapiro_wilks.R")
 source(file = "~/Documents/GitHub/phd_tools/fun_distribution_tests.R")
 source(file = "~/Documents/GitHub/phd_tools/fun_lmm_diagnostic_plots.R")
 source(file = "~/Documents/GitHub/phd_tools/fun_glm_diagnostic_plots.R")
-
-
-
-
-
-
-
-# ~ visualisation ####
-
-
-
-
-# ~ histograms ####
-
-selected_columns <- dat[, c(6:8, 9:12, 17:18)]
-
-# Replace all zeros with NA in the entire dataframe
-# dat[dat == 0] <- NA
-
-# Function to plot histogram and QQ plot for a single variable
-plot_histogram <- function(var) {
-  p1 <- ggplot(dat, aes_string(x = var)) +
-    geom_histogram(bins = 30, fill = "blue", color = "black", alpha = 0.7) +
-    theme_minimal() +
-    labs(title = var, x = var, y = "Frequency")
-  
-  # p2 <- ggqqplot(dat_y1[[var]], title = paste("QQ Plot of", var)) +
-  #   theme_minimal()
-  
-  return(list(p1))
-}
-
-# Apply function to all selected variables and store the plots
-plots <- lapply(names(selected_columns), plot_histogram)
-
-# Flatten the list of plots into a single list
-combined_plots <- do.call(c, plots)
-
-# Arrange all the plots in a grid layout
-ggarrange(plotlist = combined_plots, ncol = 3, nrow = 3)
-
-ggsave(filename = "plots/histograms.png")
-
-
-
-
-
-
-
-# ~ qqplots ####
-
-# Function to plot histogram and QQ plot for a single variable
-plot_qq <- function(var) {
-  p2 <- ggqqplot(dat[[var]], title = var) +
-    theme_minimal()
-  
-  return(list(p2))
-}
-
-# Apply function to all selected variables and store the plots
-plots <- lapply(names(selected_columns), plot_qq)
-
-# Flatten the list of plots into a single list
-combined_plots <- do.call(c, plots)
-
-# Arrange all the plots in a grid layout
-ggarrange(plotlist = combined_plots, ncol = 3, nrow = 3)
-
-ggsave(filename = "plots/qq_plots.png")
 
 
 

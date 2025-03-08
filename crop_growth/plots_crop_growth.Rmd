@@ -1,0 +1,300 @@
+---
+title: "plots_crop_establishment"
+author: "Joe Collins"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rstudioapi::getActiveProject())
+
+
+  library(dplyr) # for "glimpse" and data manipulation
+  library(ggplot2) # general plotting
+  library(ggpubr) # custom plotting
+  library(gridExtra) # grid plotting
+  library(readxl) # read .xlsx files
+  library(readr) # read .txt files
+  library(plotrix) # standard error
+```
+
+# Data 
+
+```{r data}
+
+dat <- read.csv(file = "sym_link_agronomy_data/data/crop_growth/processed_crop_data.csv")
+
+# Organise factors
+dat$plot <- as.factor(dat$plot)
+dat$block <- as.factor(dat$block)
+dat$treatment <- as.factor(dat$treatment)
+dat$year <- as.factor(dat$year)
+
+
+```
+
+# Plots
+
+
+
+
+
+
+
+# ~ plants pc per m2
+
+
+```{r}
+
+# ~ plants pc per m2 ####
+
+# Calculates mean, sd, se and IC - block
+
+s <-
+  dat %>%
+  group_by(treatment, year, crop) %>%
+  summarise( 
+    n=n(),
+    mean=mean(pc_reccomended_plants, na.rm = TRUE),
+    sd=sd(pc_reccomended_plants, na.rm = TRUE)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+# Change the order of 'treatment' using factor()
+s <- s %>%
+  mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
+         year = factor(year, levels = c("2022", "2023", "2024")),
+         crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
+
+
+s$mean <- if_else(condition = s$treatment == "Conservation" &
+                                s$crop == "Oilseed Rape", true = 0.0001, false = s$mean)
+
+
+s
+
+title_exp <-   # this is the legend title with correct notation
+
+y_title <- expression(Plants~(M^{2}))
+
+
+p1 <-
+ggplot(data = s, 
+       aes(x = interaction(treatment, crop),  # Ensures separate bars for each crop
+           y = mean, 
+           fill = treatment)) +  # Keeps color based on treatment
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9),  
+           width = 0.8) +  
+  geom_text(aes(label = crop),  
+            vjust = -2, 
+            angle = 0, 
+            size = 3, 
+            position = position_dodge(width = 0.9)) +  
+  labs(
+    x = "Treatment",
+    y = "Target plant population (%)",
+    subtitle = "Reccomended plant population (%)", 
+    caption = "") +
+  ylim(0,120) +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +  
+  theme(strip.text.x = element_text(size = 8, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank()) +  # Rotates labels
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),  
+                width = 0.2,                  
+                position = position_dodge(0.9)) +  
+  facet_grid(. ~ year, scales = "free_x") 
+
+
+
+
+t <-
+  s %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean=mean(mean, na.rm = TRUE),
+    sd=sd(mean, na.rm = TRUE)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+t
+
+p2 <-
+ggplot(data = t, 
+       aes(x = treatment,  # Ensures separate bars for each crop
+           y = mean, 
+           fill = treatment)) +  # Keeps color based on treatment
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9),  
+           width = 0.8) +  
+    ylim(0,120) +
+  labs(
+    x = "Treatment",
+    y = "Target plant population (%)",
+    subtitle = "Reccomended plant population (%)", 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +  
+  theme(strip.text.x = element_text(size = 8, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank()) +  # Rotates labels
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),  
+                width = 0.2,                  
+                position = position_dodge(0.9))  
+
+```
+
+
+
+# ~ seed losses
+
+
+```{r}
+
+# ~ seed losses ####
+
+# Calculates mean, sd, se and IC - block
+
+s <-
+  dat %>%
+  group_by(treatment, year, crop) %>%
+  summarise( 
+    n=n(),
+    mean=mean(loss_pc, na.rm = TRUE),
+    sd=sd(loss_pc, na.rm = TRUE)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+# Change the order of 'treatment' using factor()
+s <- s %>%
+  mutate(treatment = factor(treatment, levels = c("Conservation", "Conventional")),
+         year = factor(year, levels = c("2022", "2023", "2024")),
+         crop = factor(crop, levels = c("Spring Beans", "Winter Wheat", "Oilseed Rape", "Spring Barley")))
+
+s
+
+# s$mean <- if_else(condition = s$treatment == "Conservation" &
+#                                 s$crop == "Oilseed Rape", true = 0.0001, false = s$mean)
+
+
+title_exp <-   # this is the legend title with correct notation
+
+y_title <- expression(Plants~(M^{2}))
+
+
+p3 <-
+ggplot(data = s, 
+       aes(x = interaction(treatment, crop),  # Ensures separate bars for each crop
+           y = mean, 
+           fill = treatment)) +  # Keeps color based on treatment
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9),  
+           width = 0.8) +  
+  geom_text(aes(label = crop),  
+            vjust = -2, 
+            angle = 0, 
+            size = 3, 
+            position = position_dodge(width = 0.9)) + 
+  ylim(0,120) +
+  labs(
+    x = "Treatment",
+    y = "Losses (%)",
+    subtitle = "Losses from seeds planted (%)", 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +  
+  theme(strip.text.x = element_text(size = 8, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank()) +  # Rotates labels
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),  
+                width = 0.2,                  
+                position = position_dodge(0.9)) +  
+  facet_grid(. ~ year, scales = "free_x") 
+
+
+t <-
+  s %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean=mean(mean, na.rm = TRUE),
+    sd=sd(mean, na.rm = TRUE)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+t
+
+p4 <-
+ggplot(data = t, 
+       aes(x = treatment,  # Ensures separate bars for each crop
+           y = mean, 
+           fill = treatment)) +  # Keeps color based on treatment
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = position_dodge(width = 0.9),  
+           width = 0.8) + 
+  ylim(0,120) +
+  labs(
+    x = "Treatment",
+    y = "Losses (%)",
+    subtitle = "Losses from seeds planted (%)", 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values = c("turquoise3", "tomato2"), 
+                    name = "Treatment") +  
+  theme(strip.text.x = element_text(size = 8, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank()) +  # Rotates labels
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),  
+                width = 0.2,                  
+                position = position_dodge(0.9))  
+
+```
+
+
+```{r}
+
+ggarrange(p1,p2,p3,p4,
+          ncol = 2, nrow = 2,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B", "C", "D"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/crop_establishment/fig_establishment_and_loss.png", 
+       width = 10, height = 6.5)
+
+```
+
+
+```{r}
+
+
+
+```
