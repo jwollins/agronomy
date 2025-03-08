@@ -3,11 +3,14 @@
 ## what: combine yield
 ## when: 2024-10-15
 
+setwd(rstudioapi::getActiveProject())
+
 getwd()
 
-setwd("~/OneDrive - Harper Adams University/Data/agronomy/")
 
-## 00 packages ####
+
+#______________________________________________________________####
+# packages ####
 
 library(ggplot2)
 library(ggpubr)
@@ -18,9 +21,30 @@ library(readxl)
 library(lme4)
 library(emmeans)
 
-## 01 DATA ####
 
- dat <- read_excel(path = "data/yield/all_years_combine_yield.xlsx")
+
+
+#______________________________________________________________####
+# Functions ####
+
+
+source(file = "~/Documents/GitHub/phd_tools/fun_distribution_plots.R")
+
+source(file = "~/Documents/GitHub/phd_tools/fun_glm_diagnostic_plots.R")
+
+
+
+
+
+
+
+#______________________________________________________________####
+# DATA ####
+
+
+# ~ read yield data ####
+
+ dat <- read_excel(path = "sym_link_agronomy_data/data/yield/all_years_combine_yield.xlsx")
  
  dat <- filter(dat, treatment == "Conventional" | treatment == "Conservation")
  
@@ -29,7 +53,13 @@ library(emmeans)
  dat$block <- as.factor(dat$block)
  dat$Treatment <- as.factor(dat$treatment)
  
+
  
+ 
+ 
+
+# ~ set UK mean yield data ####
+  
  # Define average UK yield per hectare for each crop
  uk_yield_ha <- c(
    "Spring Beans" = 3.5,   # Example average in tonnes per hectare
@@ -50,8 +80,20 @@ library(emmeans)
  
 
  
-## 02 Summary Table ####
  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+#______________________________________________________________#### 
+# Summary Table ####
+ 
+ 
+# ~ yield #### 
+
  # Calculates mean, sd, se and IC - block
  yield_sum <- dat %>%
    group_by(treatment, year, crop) %>%
@@ -63,6 +105,20 @@ library(emmeans)
    mutate( se=sd/sqrt(n))  %>%
    mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
  
+ 
+ yield_treatment_sum <- dat %>%
+   group_by(treatment) %>%
+   summarise( 
+     n=n(),
+     mean=mean(corrected_plot_t_ha),
+     sd=sd(corrected_plot_t_ha)
+   ) %>%
+   mutate( se=sd/sqrt(n))  %>%
+   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ 
+ 
+# ~ uk percentage yield ####
  
  # Calculates mean, sd, se and IC - block
  yield_pc_sum <- dat %>%
@@ -76,31 +132,28 @@ library(emmeans)
    mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
  
  
- ## 03 Visual tests ####
  
- ### Desity plot ####
- 
- # Density plot and Q-Q plot can be used to check normality visually.
- # 
- # Density plot: the density plot provides a visual judgment about whether the distribution is bell shaped.
- 
- ggdensity(dat$corrected_plot_t_ha, 
-           main = "Combine Yield",
-           xlab = "Total Yield")
- 
- ### Q plot ####
- 
- # Q-Q plot: Q-Q plot (or quantile-quantile plot) draws the correlation between a 
- # given sample and the normal distribution. A 45-degree reference line is also plotted.
- 
- ggqqplot(dat$corrected_plot_t_ha, 
-          main = "Total Score")
+ yield_pc_treatment_sum <- dat %>%
+   group_by(treatment) %>%
+   summarise( 
+     n=n(),
+     mean=mean(yield_percent_uk),
+     sd=sd(yield_percent_uk)
+   ) %>%
+   mutate( se=sd/sqrt(n))  %>%
+   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
  
  
  
- ### Normality test ####
  
- # Visual inspection, described in the previous section, is usually unreliable. 
+ 
+ #______________________________________________________________#### 
+# Distributions ####
+ 
+ 
+ # ~ combine yield data ####
+ 
+  # Visual inspection, described in the previous section, is usually unreliable. 
  # It’s possible to use a significance test comparing the sample distribution to a 
  # normal one in order to ascertain whether data show or not a serious deviation from normality.
  # 
@@ -116,18 +169,17 @@ library(emmeans)
  shapiro.test(dat$corrected_plot_t_ha)
  
  
- ### Histogram ####
+ distribution_plots(data = dat, variable = dat$corrected_plot_t_ha, colour = dat$corrected_plot_t_ha)
+
  
- gghistogram(dat$corrected_plot_t_ha)
  
+ # ~ UK percentage yield data ####
  
- ### Box plots ####
- # ++++++++++++++++++++
- # Plot weight by group and color by group
+ shapiro.test(dat$yield_percent_uk)
  
- ggplot(dat, aes(x = Treatment, 
-                 y = corrected_plot_t_ha, colour = Treatment)) + 
-   geom_boxplot() 
+
+ distribution_plots(data = dat, variable = dat$yield_percent_uk, colour = dat$yield_percent_uk)
+
  
  
  
@@ -218,11 +270,14 @@ library(emmeans)
  
  
  
+  
+  
+  
+
  
  
- 
- 
- ## 04 BARPLOT ####
+#______________________________________________________________#### 
+ # BARPLOT ####
  
  
  ### YIELD PLOT ####
@@ -240,6 +295,8 @@ y1 <- ggplot(data = yield_sum,
    geom_bar(stat = "identity", 
             color = "black", 
             position = "dodge") + 
+  geom_text(aes(label = crop), vjust = -2, angle = 0, size = 3) +
+  ylim(0, 12.5) +
    labs(
      x = "Treatment",
      y = y_title,
@@ -258,12 +315,14 @@ y1 <- ggplot(data = yield_sum,
                      ymax = mean + se),
                  width=.2,                    # Width of the error bars
                  position=position_dodge(.9)) +
-   facet_wrap(~ year + crop, 
+   facet_wrap(~ year, 
               ncol = 4, 
               scales = 'free_x') 
 
 y1
- 
+
+
+
  
    # geom_signif(
    #   data = subset(my_sum, year == 2022), # Subset data for Crop1
@@ -303,9 +362,10 @@ y1
    geom_bar(stat = "identity", 
             color = "black", 
             position = "dodge") + 
+  ylim(0, 200) +
    labs(
      x = "Treatment",
-     y = "Percentage of UK average yield (%)",
+     y = "UK average yield (%)",
      subtitle = "Percentage of UK average yield (%)", 
      caption = "") +
    theme_bw() +
@@ -329,14 +389,92 @@ y1
 y2 
 
 
+y3 <- ggplot(data = yield_treatment_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  ylim(0, 12.5) +
+  labs(
+    x = "Treatment",
+    y = y_title,
+    subtitle = expression(Mean~Combine~Yield~(t~ha^{-1})), 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 10, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) 
 
 
-ggarrange(y1, y2, 
-          ncol = 2, 
-          common.legend = TRUE, 
+y3
+
+
+
+
+
+y4 <- ggplot(data = yield_pc_treatment_sum, 
+             aes(x = treatment, 
+                 y = mean, 
+                 fill = treatment)) + 
+  geom_bar(stat = "identity", 
+           color = "black", 
+           position = "dodge") + 
+  ylim(0, 200) +
+  labs(
+    x = "Treatment",
+    y = "UK average yield (%)",
+    subtitle = "Mean of UK average yield (%)", 
+    caption = "") +
+  theme_bw() +
+  scale_fill_manual(values=c("turquoise3","tomato2"), 
+                    name = "Treatment") +
+  theme(strip.text.x = element_text(size = 12, 
+                                    color = "black", 
+                                    face = "bold.italic"), 
+        legend.position = "bottom", 
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) +
+  geom_errorbar(aes(ymin = mean - se, 
+                    ymax = mean + se),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9)) 
+
+y4
+
+
+# ggarrange(y1, y2, 
+#           ncol = 2, 
+#           common.legend = TRUE, 
+#           legend = "bottom", 
+#           labels = c("A", "B"))
+# 
+# ggsave(filename = "plots/yield_plots/fig_yield_plot.png", width = 10, height = 4)
+
+
+
+
+library(ggpubr)
+
+ggarrange(y1, y3, y2, y4,
+          ncol = 2, nrow = 2,  
+          common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
-          labels = c("A", "B"))
+          labels = c("A", "B", "C", "D"),
+          widths = c(2, 1))  # Make first column twice as wide
 
-ggsave(filename = "plots/yield_plots/fig_yield_plot.png", width = 10, height = 4)
+
+ggsave(filename = "sym_link_agronomy_data/plots/yield_plots/fig_yields_plot.png", 
+       width = 10, height = 6.5)
 
 
