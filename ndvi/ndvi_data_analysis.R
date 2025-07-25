@@ -307,8 +307,8 @@ write.csv(final_ndvi_df, "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv", 
 ###########################################################################
 
 
-dat1 <- read.csv(file = "ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv")
-dat2 <- read.csv(file = "ndvi/data/prcoessed.data/new_ndvi_data.csv")
+dat1 <- read.csv(file = "~/OneDrive - Harper Adams University/Data/ndvi/data/prcoessed.data/NDVI_by_plot_all_dates.csv")
+dat2 <- read.csv(file = "~/OneDrive - Harper Adams University/Data/ndvi/data/prcoessed.data/new_ndvi_data.csv")
 
 dat2 <- dat2[,2:ncol(dat2)]
 
@@ -414,6 +414,8 @@ ndvi_sum <- ndvi_sum %>%
 
 
 
+
+
 ggplot(data = ndvi_sum, 
        aes(y = mean_smooth, x = Date, color = treatment)) +
   geom_point(aes(y = mean), size = 1, alpha = 0.5) +  # Plot original points (faded)
@@ -426,8 +428,8 @@ ggplot(data = ndvi_sum,
   labs(
     x = "Date",
     y = "Mean NDVI (Smoothed)",
-    color = "Treatment",
-    fill = "Treatment"
+    color = NULL,
+    fill = NULL
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for clarity
         legend.position = "bottom") +
@@ -437,14 +439,65 @@ ggplot(data = ndvi_sum,
   )
 
 
-ggsave(filename = "agronomy/plots/fig_ndvi_moving_mean_plot.png", width = 8, height = 4)
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/fig_ndvi_moving_mean_plot.png", width = 8, height = 4)
 
 
 
+ggplot(data = ndvi_sum, 
+       aes(y = mean_smooth, x = Date, color = treatment)) +
+  geom_point(aes(y = mean), size = 1, alpha = 0.5) +  # Plot original points (faded)
+  geom_line(aes(group = treatment), alpha = 0.8, size = 1.2) +  # Smoothed line
+  geom_ribbon(
+    aes(ymin = mean_smooth - se_smooth, ymax = mean_smooth + se_smooth, fill = treatment), 
+    alpha = 0.3, 
+    color = NA) +  # Smoothed error ribbon
+  theme_bw() +  # Clean theme
+  labs(
+    x = "Date",
+    y = "Mean NDVI (Smoothed)",
+    color = NULL,
+    fill = NULL
+  ) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-10-03")),  # Example date for the vertical line
+             linetype = "dashed",
+             color = "black") +
+  geom_vline(xintercept = as.numeric(as.Date("2023-08-20")),  # Example date for the vertical line
+             linetype = "dashed",
+             color = "black") +
+  geom_vline(xintercept = as.numeric(as.Date("2024-03-15")),  # Example date for the vertical line
+             linetype = "dashed",
+             color = "turquoise3") +
+  annotate(geom = "text", 
+           x = as.Date("2022-04-05"),
+           y = 0.4, 
+           label = "Spring Beans", 
+           fontface = "bold") +
+  annotate(geom = "text", 
+           x = as.Date("2023-02-05"),
+           y = 0.4, 
+           label = "Winter Wheat", 
+           fontface = "bold") +
+  annotate(geom = "text", 
+           x = as.Date("2023-11-25"),
+           y = 0.4, 
+           label = "Oilseed Rape", 
+           fontface = "bold") + 
+  annotate(geom = "text", 
+           x = as.Date("2024-07-01"),
+           y = 0.4, 
+           label = "Spring Barley", 
+           fontface = "bold",
+           color = "turquoise3") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for clarity
+        legend.position = "bottom") +
+  scale_x_date(
+    breaks = date_breaks("8 weeks"),  # Adjust the frequency of x-axis ticks
+    labels = date_format("%m/%Y"),  # Format the date labels
+    limits = c(as.Date("2022-02-01"), as.Date("2024-10-01"))
+  ) 
 
 
-
-
+ggsave(filename = "~/OneDrive - Harper Adams University/Data/agronomy/plots/fig_ndvi_moving_mean_plot_with_lines.png", width = 8, height = 4)
 
 
 
