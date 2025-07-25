@@ -332,7 +332,11 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_sum_chem_
 
 
 
-## Herbicide
+#____________________________________
+#Pesticide Joint plots
+
+
+## ~ Herbicide
 
 ```{r herbicide}
 
@@ -361,9 +365,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.85) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Herbicide~(AI~kg^{-1})) ,
-        subtitle = expression(Total~Herbicide~(AI~kg^{-1})) ,
+        x = NULL,
+        y = expression(Total~Herbicide~(AI~kg^{-1}~ha^{-1})) ,
+        subtitle = expression(Total~Herbicide~(AI~kg^{-1}~ha^{-1})) ,
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -402,9 +406,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.85) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Herbicide~(AI~kg^{-1})),
-        subtitle = expression(Total~Herbicide~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~Herbicide~(AI~kg^{-1}~ha^{-1})),
+        subtitle = expression(Mean~Herbicide~(AI~kg^{-1}~ha^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -437,7 +441,7 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
 
 
 
-## Fungicide
+## ~ Fungicide
 
 ```{r Fungicide}
 
@@ -457,7 +461,7 @@ summ <- element_dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-p1 <-   ggplot(data = summ, 
+p3 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -466,7 +470,7 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.8) +
       labs(
-        x = "Treatment",
+        x = NULL,
         y = expression(Total~Fungicide~(AI~kg^{-1})) ,
         subtitle = expression(Total~Fungicide~(AI~kg^{-1})) ,
         caption = "") +
@@ -498,7 +502,7 @@ p1 <-   ggplot(data = summ,
  summ$Year <- "All Years"  # Dummy variable for faceting
 
  
- p2 <-   ggplot(data = summ, 
+ p4 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -507,9 +511,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.8) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Fungicide~(AI~kg^{-1})),
-        subtitle = expression(Total~Fungicide~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~Fungicide~(AI~kg^{-1})),
+        subtitle = expression(Mean~Fungicide~(AI~kg^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -526,7 +530,7 @@ p1 <-   ggplot(data = summ,
                     position=position_dodge(.9)) +
       facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
  
-ggarrange(p1,p2,
+ggarrange(p3,p4,
           ncol = 2, nrow = 1,  
           common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
@@ -543,7 +547,7 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
 
 
 
-## Insecticide
+## ~ Insecticide
 
 ```{r Insecticide}
 
@@ -563,7 +567,7 @@ summ <- element_dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-p1 <-   ggplot(data = summ, 
+p5 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -572,7 +576,7 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,0.025) +
       labs(
-        x = "Treatment",
+        x = NULL,
         y = expression(Total~Insecticide~(AI~kg^{-1})) ,
         subtitle = expression(Total~Insecticide~(AI~kg^{-1})) ,
         caption = "") +
@@ -604,7 +608,7 @@ p1 <-   ggplot(data = summ,
  summ$Year <- "All Years"  # Dummy variable for faceting
 
  
- p2 <-   ggplot(data = summ, 
+ p6 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -613,9 +617,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,0.025) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Insecticide~(AI~kg^{-1})),
-        subtitle = expression(Total~Insecticide~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~Insecticide~(AI~kg^{-1})),
+        subtitle = expression(Mean~Insecticide~(AI~kg^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -632,7 +636,7 @@ p1 <-   ggplot(data = summ,
                     position=position_dodge(.9)) +
       facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
  
-ggarrange(p1,p2,
+ggarrange(p5,p6,
           ncol = 2, nrow = 1,  
           common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
@@ -648,7 +652,7 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
 
 
 
-## Molluscicide
+## ~ Molluscicide
 
 ```{r Molluscicide}
 
@@ -668,7 +672,7 @@ summ <- element_dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-p1 <-   ggplot(data = summ, 
+p7 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -677,7 +681,7 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,0.5) +
       labs(
-        x = "Treatment",
+        x = NULL,
         y = expression(Total~Molluscicide~(AI~kg^{-1})) ,
         subtitle = expression(Total~Molluscicide~(AI~kg^{-1})) ,
         caption = "") +
@@ -709,7 +713,7 @@ p1 <-   ggplot(data = summ,
  summ$Year <- "All Years"  # Dummy variable for faceting
 
  
- p2 <-   ggplot(data = summ, 
+ p8 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -718,9 +722,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,0.5) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Molluscicide~(AI~kg^{-1})),
-        subtitle = expression(Total~Molluscicide~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~Molluscicide~(AI~kg^{-1})),
+        subtitle = expression(Mean~Molluscicide~(AI~kg^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -737,7 +741,7 @@ p1 <-   ggplot(data = summ,
                     position=position_dodge(.9)) +
       facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
  
-ggarrange(p1,p2,
+ggarrange(p7,p8,
           ncol = 2, nrow = 1,  
           common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
@@ -753,7 +757,7 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
 
 
 
-## Desiccant
+## ~ Desiccant
 
 ```{r Desiccant}
 
@@ -773,7 +777,7 @@ summ <- element_dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-p1 <-   ggplot(data = summ, 
+p9 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -782,7 +786,7 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.5) +
       labs(
-        x = "Treatment",
+        x = NULL,
         y = expression(Total~Desiccant~(AI~kg^{-1})) ,
         subtitle = expression(Total~Desiccant~(AI~kg^{-1})) ,
         caption = "") +
@@ -814,7 +818,7 @@ p1 <-   ggplot(data = summ,
  summ$Year <- "All Years"  # Dummy variable for faceting
 
  
- p2 <-   ggplot(data = summ, 
+ p10 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -823,9 +827,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(0,1.5) +
       labs(
-        x = "Treatment",
-        y = expression(Total~Desiccant~(AI~kg^{-1})),
-        subtitle = expression(Total~Desiccant~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~Desiccant~(AI~kg^{-1})),
+        subtitle = expression(Mean~Desiccant~(AI~kg^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -842,7 +846,7 @@ p1 <-   ggplot(data = summ,
                     position=position_dodge(.9)) +
       facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
  
-ggarrange(p1,p2,
+ggarrange(p9,p10,
           ncol = 2, nrow = 1,  
           common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
@@ -858,7 +862,7 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
 
 
 
-## PGR
+## ~ PGR
 
 ```{r PGR}
 
@@ -878,7 +882,7 @@ summ <- element_dat %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-p1 <-   ggplot(data = summ, 
+p11 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -887,7 +891,7 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(-0.1,1.8) +
       labs(
-        x = "Treatment",
+        x = NULL,
         y = expression(Total~PGR~(AI~kg^{-1})) ,
         subtitle = expression(Total~PGR~(AI~kg^{-1})) ,
         caption = "") +
@@ -919,7 +923,7 @@ p1 <-   ggplot(data = summ,
  summ$Year <- "All Years"  # Dummy variable for faceting
 
  
- p2 <-   ggplot(data = summ, 
+ p12 <-   ggplot(data = summ, 
            aes(x = treatment, 
                y = mean, 
                fill = treatment)) + 
@@ -928,9 +932,9 @@ p1 <-   ggplot(data = summ,
                position = "dodge") + 
    ylim(-0.1,1.8) +
       labs(
-        x = "Treatment",
-        y = expression(Total~PGR~(AI~kg^{-1})),
-        subtitle = expression(Total~PGR~(AI~kg^{-1})),
+        x = NULL,
+        y = expression(Mean~PGR~(AI~kg^{-1})),
+        subtitle = expression(Mean~PGR~(AI~kg^{-1})),
         caption = "") +
       theme_bw() +
       scale_fill_manual(values=c("turquoise3","tomato2"), 
@@ -947,7 +951,7 @@ p1 <-   ggplot(data = summ,
                     position=position_dodge(.9)) +
       facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
  
-ggarrange(p1,p2,
+ggarrange(p11,p12,
           ncol = 2, nrow = 1,  
           common.legend = TRUE,  # Use a common legend
           legend = "bottom", 
@@ -958,5 +962,1034 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_
        width = 10, height = 3.5)
 
 
+
+```
+
+
+
+# large plot
+
+
+```{r large plot}
+
+ggarrange(p1,p2,p3,p4,p5,p6,
+          ncol = 2, nrow = 3,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B", "C", "D", "E", "F"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_pesticide_large_plot.png",
+       width = 10, height = 9)
+
+```
+
+```{r large plot}
+
+ggarrange(p7,p8,p9,p10,p11,p12,
+          ncol = 2, nrow = 3,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B", "C", "D", "E", "F"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_minor_pesticides_plot.png",
+       width = 10, height = 9)
+
+```
+
+
+
+
+
+
+#____________________________________
+#Fertiliser Joint plots
+
+
+## ~ N
+
+```{r N}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "N")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1,200) +
+      labs(
+        x = NULL,
+        y = expression(Total~Nitrogen~(N~kg^{-1})) ,
+        subtitle = expression(Total~Nitrogen~(N~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1,200) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Nitrogen~(N~kg^{-1})),
+        subtitle = expression(Mean~Nitrogen~(N~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f1,f2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_N.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## ~ P
+
+```{r P}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "P")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f3 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 100) +
+      labs(
+        x = NULL,
+        y = expression(Total~Phosphorus~(P~kg^{-1})) ,
+        subtitle = expression(Total~Phosphorus~(P~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f4 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 100) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Phosphorus~(P~kg^{-1})),
+        subtitle = expression(Mean~Phosphorus~(P~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f3,f4,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_P.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+## ~ K
+
+```{r K}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "K")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f5 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 100) +
+      labs(
+        x = NULL,
+        y = expression(Total~Potassium~(K~kg^{-1})) ,
+        subtitle = expression(Total~Potassium~(K~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f6 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 100) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Potassium~(K~kg^{-1})),
+        subtitle = expression(Mean~Potassium~(K~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f5,f6,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_K.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+
+## ~ S
+
+```{r S}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "S")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f7 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 130) +
+      labs(
+        x = NULL,
+        y = expression(Total~Sulphur~(S~kg^{-1})) ,
+        subtitle = expression(Total~Sulphur~(S~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f8 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 130) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Sulphur~(S~kg^{-1})),
+        subtitle = expression(Mean~Sulphur~(S~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f7,f8,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_S.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+
+# large plot
+
+
+```{r large plot}
+
+ggarrange(f1,f2,f3,f4,f5,f6,f7,f8,
+          ncol = 2, nrow = 4,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B", "C", "D", "E", "F","G", "H"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_fertiliser_large_plot.png",
+       width = 10, height = 12)
+
+```
+
+
+
+
+
+## ~ Ca
+
+```{r Ca}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "Ca")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f9 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 50) +
+      labs(
+        x = NULL,
+        y = expression(Total~Calcium~(Ca~kg^{-1})) ,
+        subtitle = expression(Total~Calcium~(Ca~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f10 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 50) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Calcium~(Ca~kg^{-1})),
+        subtitle = expression(Mean~Calcium~(Ca~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f9,f10,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_Ca.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+## ~ Mg
+
+```{r Mg}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "Mg")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f11 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 18) +
+      labs(
+        x = NULL,
+        y = expression(Total~Magnesium~(Mg~kg^{-1})) ,
+        subtitle = expression(Total~Magnesium~(Mg~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f12 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 18) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Magnesium~(Mg~kg^{-1})),
+        subtitle = expression(Mean~Magnesium~(Mg~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f11,f12,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_Mg.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## ~ B
+
+```{r B}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "B")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f13 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 0.4) +
+      labs(
+        x = NULL,
+        y = expression(Total~Boron~(B~kg^{-1})) ,
+        subtitle = expression(Total~Boron~(B~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f14 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1, 0.4) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Boron~(B~kg^{-1})),
+        subtitle = expression(Mean~Boron~(B~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f13,f14,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_B.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+
+## ~ Cu
+
+```{r Cu}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "Cu")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f15 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.003, 0.02) +
+      labs(
+        x = NULL,
+        y = expression(Total~Copper~(Cu~kg^{-1})) ,
+        subtitle = expression(Total~Copper~(Cu~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f16 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.003, 0.02) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Copper~(Cu~kg^{-1})),
+        subtitle = expression(Mean~Copper~(Cu~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f15,f16,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_Cu.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+## ~ Mn
+
+```{r Mn}
+
+element_dat <- filter(.data = summary_fert_dat_yt, chem_element == "Mn")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+f17 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.003, 0.4) +
+      labs(
+        x = NULL,
+        y = expression(Total~Manganese~(Mn~kg^{-1})) ,
+        subtitle = expression(Total~Manganese~(Mn~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Chem_Element_kg_ha),
+    sd = sd(Total_Chem_Element_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ f18 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.003, 0.4) +
+      labs(
+        x = NULL,
+        y = expression(Mean~Manganese~(Mn~kg^{-1})),
+        subtitle = expression(Mean~Manganese~(Mn~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(f17,f18,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_Mn.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+# large plot
+
+
+```{r large plot}
+
+ggarrange(f9,f10,f11,f12,f13,f14,f17,f18,
+          ncol = 2, nrow = 4,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B", "C", "D", "E", "F","G", "H"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_fert_plots/fig_fertiliser_micronutrients_plot.png",
+       width = 10, height = 12)
 
 ```
