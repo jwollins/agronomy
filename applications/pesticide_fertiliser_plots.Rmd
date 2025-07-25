@@ -328,3 +328,635 @@ ggsave(filename = "sym_link_agronomy_data/plots/application_plots/fert_sum_chem_
        width = 10, height = 6)
 
 ```
+
+
+
+
+## Herbicide
+
+```{r herbicide}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "Herbicide")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.85) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Herbicide~(AI~kg^{-1})) ,
+        subtitle = expression(Total~Herbicide~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.85) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Herbicide~(AI~kg^{-1})),
+        subtitle = expression(Total~Herbicide~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_herbicides.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## Fungicide
+
+```{r Fungicide}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "Fungicide")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.8) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Fungicide~(AI~kg^{-1})) ,
+        subtitle = expression(Total~Fungicide~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.8) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Fungicide~(AI~kg^{-1})),
+        subtitle = expression(Total~Fungicide~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_fungicides.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+
+## Insecticide
+
+```{r Insecticide}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "Insecticide")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,0.025) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Insecticide~(AI~kg^{-1})) ,
+        subtitle = expression(Total~Insecticide~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,0.025) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Insecticide~(AI~kg^{-1})),
+        subtitle = expression(Total~Insecticide~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_Insecticide.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## Molluscicide
+
+```{r Molluscicide}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "Molluscicide")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,0.5) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Molluscicide~(AI~kg^{-1})) ,
+        subtitle = expression(Total~Molluscicide~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,0.5) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Molluscicide~(AI~kg^{-1})),
+        subtitle = expression(Total~Molluscicide~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_Molluscicide.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## Desiccant
+
+```{r Desiccant}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "Desiccant")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.5) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Desiccant~(AI~kg^{-1})) ,
+        subtitle = expression(Total~Desiccant~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(0,1.5) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~Desiccant~(AI~kg^{-1})),
+        subtitle = expression(Total~Desiccant~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_Desiccant.png",
+       width = 10, height = 3.5)
+
+
+
+```
+
+
+
+## PGR
+
+```{r PGR}
+
+element_dat <- filter(.data = summary_spray_dat_yt, category == "PGR")
+
+names(element_dat)
+
+# Calculates mean, sd, se and IC - block
+summ <- element_dat %>%
+  group_by(treatment, year) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+
+
+p1 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1,1.8) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~PGR~(AI~kg^{-1})) ,
+        subtitle = expression(Total~PGR~(AI~kg^{-1})) ,
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      facet_wrap(~ year, 
+                 ncol = 4, 
+                 scales = 'free_x') 
+ 
+
+ 
+ summ <- element_dat %>%
+  group_by(treatment) %>%
+  summarise( 
+    n=n(),
+    mean = mean(Total_Active_Ingredient_kg_ha),
+    sd = sd(Total_Active_Ingredient_kg_ha)
+  ) %>%
+  mutate( se=sd/sqrt(n))  %>%
+  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+ 
+ summ$Year <- "All Years"  # Dummy variable for faceting
+
+ 
+ p2 <-   ggplot(data = summ, 
+           aes(x = treatment, 
+               y = mean, 
+               fill = treatment)) + 
+      geom_bar(stat = "identity", 
+               color = "black", 
+               position = "dodge") + 
+   ylim(-0.1,1.8) +
+      labs(
+        x = "Treatment",
+        y = expression(Total~PGR~(AI~kg^{-1})),
+        subtitle = expression(Total~PGR~(AI~kg^{-1})),
+        caption = "") +
+      theme_bw() +
+      scale_fill_manual(values=c("turquoise3","tomato2"), 
+                        name = NULL) +
+      theme(strip.text.x = element_text(size = 12, 
+                                        color = "black", 
+                                        face = "bold.italic"), 
+            legend.position = "bottom", 
+            # legend.title = element_text(face = "bold")  # <- This line makes the legend title bold
+            ) +
+      geom_errorbar(aes(ymin = mean - se, 
+                        ymax = mean + se),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9)) +
+      facet_wrap(~Year, ncol = 4)  # Ensure it matches `p1`
+ 
+ggarrange(p1,p2,
+          ncol = 2, nrow = 1,  
+          common.legend = TRUE,  # Use a common legend
+          legend = "bottom", 
+          labels = c("A", "B"),
+          widths = c(2, 1))  # Make first column twice as wide
+
+ggsave(filename = "sym_link_agronomy_data/plots/application_plots/new_plots/fig_PGR.png",
+       width = 10, height = 3.5)
+
+
+
+```
